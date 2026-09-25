@@ -2,9 +2,10 @@
    EPS Tout en 1 — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.6';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-tout-en-1/';
 const CHANGELOG = [
+  { v: '2.6', items: ['Parkour : ateliers, éléments, niveaux et critères de validation repris de l\'appli Parkour EPS – Arzacq'] },
   { v: '2.5', items: ['Parkour : liste de plusieurs exercices évalués pour chaque élève'] },
   { v: '2.4', items: ['Outils réorganisés par champ d\'apprentissage : performance, gymniques & artistiques, duel, APPN (+ outils transversaux)'] },
   { v: '2.3', items: ['Nouvel outil Combiné athlétique (duathlon / triathlon)', 'Enregistrement des résultats par classe et par élève dans les outils de mesure + outil « Résultats des élèves »'] },
