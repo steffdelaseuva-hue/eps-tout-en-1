@@ -2,9 +2,10 @@
    EPS Tout en 1 — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '1.6';
+const APP_VERSION = '1.7';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-tout-en-1/';
 const CHANGELOG = [
+  { v: '1.7', items: ['Gestion de match : ajout de l\'escrime (piste, touches casque / cou / buste / bras / dos)'] },
   { v: '1.6', items: ['Gestion de match : ajout du Shortennis'] },
   { v: '1.5', items: ['Nouvel outil Gestion de match : 7 sports, terrain, match au temps ou au point, bonus, zones visées, statistiques, historique'] },
   { v: '1.4', items: ['Niveaux de jeu des élèves (1, 2, 3)', 'Équipes hétérogènes ou homogènes : Composition d\'équipes, Championnat (une poule par niveau), Tournoi, Relais'] },

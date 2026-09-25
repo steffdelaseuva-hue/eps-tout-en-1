@@ -16,9 +16,11 @@ const SPORTS = {
   badminton:{ name: 'Badminton', coll: false, type: 'points', target: 21, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
   shortennis:{ name: 'Shortennis', coll: false, type: 'points', target: 11, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
   tennis:   { name: 'Tennis', coll: false, type: 'points', target: 11, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
+  escrime:  { name: 'Escrime', coll: false, touch: true, type: 'points', target: 5, ecart: false, score: [] },
   tt:       { name: 'Tennis de table', coll: false, type: 'points', target: 11, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
 };
 const BONUS_VALUES = [1, 2, 3, 5, 10, 100, 1000];
+const TOUCH_ZONES = ['Casque', 'Cou', 'Buste', 'Bras', 'Dos'];
 
 /* ---------- Terrains (SVG, orientés en longueur) ---------- */
 function courtSVG(sport) {
@@ -44,6 +46,12 @@ function courtSVG(sport) {
       <line x1="94" y1="4" x2="94" y2="118" ${L}/><line x1="174" y1="4" x2="174" y2="118" ${L}/><line x1="4" y1="61" x2="94" y2="61" ${L}/><line x1="174" y1="61" x2="264" y2="61" ${L}/>` };
     case 'tennis': return { vb: '0 0 250 124', bg: '#3C7BE0', svg: `<rect x="6" y="6" width="238" height="112" stroke="#fff" stroke-width="1.6" fill="#2E62B8"/><line x1="6" y1="20" x2="244" y2="20" ${L}/><line x1="6" y1="104" x2="244" y2="104" ${L}/>
       <line x1="125" y1="0" x2="125" y2="124" stroke="#fff" stroke-width="3"/><line x1="61" y1="20" x2="61" y2="104" ${L}/><line x1="189" y1="20" x2="189" y2="104" ${L}/><line x1="61" y1="62" x2="189" y2="62" ${L}/>` };
+    case 'escrime': return { vb: '0 0 300 60', bg: '#26324A', svg: `<rect x="10" y="14" width="280" height="32" fill="#8E9BB0"/>
+      <rect x="10" y="14" width="40" height="32" fill="#C0504D" opacity=".75"/><rect x="250" y="14" width="40" height="32" fill="#C0504D" opacity=".75"/>
+      <rect x="10" y="14" width="280" height="32" ${L}/><line x1="150" y1="14" x2="150" y2="46" stroke="#fff" stroke-width="2"/>
+      <line x1="110" y1="14" x2="110" y2="46" ${L}/><line x1="190" y1="14" x2="190" y2="46" ${L}/>
+      <text x="150" y="10" text-anchor="middle" font-size="7" fill="#fff" opacity=".8">ligne médiane</text><text x="110" y="56" text-anchor="middle" font-size="6.5" fill="#fff" opacity=".8">en garde</text><text x="190" y="56" text-anchor="middle" font-size="6.5" fill="#fff" opacity=".8">en garde</text>
+      <text x="30" y="56" text-anchor="middle" font-size="6.5" fill="#fff" opacity=".8">avertissement</text><text x="270" y="56" text-anchor="middle" font-size="6.5" fill="#fff" opacity=".8">avertissement</text>` };
     case 'tt': return { vb: '0 0 274 152', bg: '#1F2A44', svg: `<rect x="6" y="6" width="262" height="140" fill="#1E5BD8" stroke="#fff" stroke-width="2.5"/><line x1="6" y1="76" x2="268" y2="76" stroke="#fff" stroke-width="1"/>
       <line x1="137" y1="0" x2="137" y2="152" stroke="#fff" stroke-width="3.5"/>` };
   }
@@ -130,7 +138,7 @@ TOOL_IMPL.match = function (el) {
     const marques = e.filter(x => x.kind === 'score' && x.shot).length, tirsRates = e.filter(x => x.kind === 'tir').length;
     const zones = Array.from({ length: nz || 0 }, (_, z) => e.filter(x => x.kind === 'zone' && x.zone === z + 1).length);
     return { marques, tirs: marques + tirsRates, pertes: e.filter(x => x.kind === 'perte').length, passes: e.filter(x => x.kind === 'passe').length,
-      bonus: e.filter(x => x.kind === 'bonus').reduce((a, x) => a + x.pts, 0), zones };
+      bonus: e.filter(x => x.kind === 'bonus').reduce((a, x) => a + x.pts, 0), zones, touches: TOUCH_ZONES.map(z => e.filter(x => x.tz === z).length) };
   });
   const scoreOf = t => M.ev.filter(x => x.team === t && (x.kind === 'score' || x.kind === 'bonus')).reduce((a, x) => a + x.pts, 0);
   const now = () => M.acc + (M.run ? performance.now() - M.t0 : 0);
@@ -152,6 +160,7 @@ TOOL_IMPL.match = function (el) {
       <div class="court" style="background:${c.bg}"><svg viewBox="${c.vb}">${c.svg}${bands}</svg></div>
       ${zonesOn ? '<p class="muted" style="margin:6px 2px 0;font-size:.8rem">Touchez la zone atteinte par l\'équipe qui a le ballon. Zone 1 = son propre camp, zone ' + S.nz + ' = près du but adverse.</p>' : ''}
       <div class="act">${[0, 1].map(t => `<div class="col ${t ? 'cb' : 'ca'}"><h4>${esc(t ? S.b : S.a)}</h4>
+          ${sp.touch ? TOUCH_ZONES.map(z => `<button class="sc" data-t="${t}" data-tz="${z}">Touche ${z.toLowerCase()}<small>+1</small></button>`).join('') : ''}
           ${sp.score.map((s, i) => `<button class="sc" data-t="${t}" data-sc="${i}">${s.l}${s.sub ? `<small>${s.sub}</small>` : ''}</button>`).join('')}
           ${S.bonus.length ? `<div class="bn">${S.bonus.map(v => `<button data-t="${t}" data-bo="${v}">Bonus<br>+${v}</button>`).join('')}</div>` : ''}
           ${sp.coll && S.stats ? `<button data-t="${t}" data-k="tir">🎯 Tir tenté<small>raté</small></button><button data-t="${t}" data-k="passe">🤝 Passe décisive</button><button data-t="${t}" data-k="perte">❌ Perte de balle</button>` : ''}
@@ -164,6 +173,7 @@ TOOL_IMPL.match = function (el) {
     el.querySelectorAll('[data-p]').forEach(b => b.onclick = () => setPoss(+b.dataset.p));
     el.querySelectorAll('[data-sc]').forEach(b => b.onclick = () => { const t = +b.dataset.t, s = sp.score[+b.dataset.sc];
       add({ team: t, kind: 'score', pts: s.p, label: s.l, shot: sp.coll ? (S.sport === 'rugby' ? !!s.try : true) : false }); beep(1200, .12); if (zonesOn) setPoss(1 - t); });
+    el.querySelectorAll('[data-tz]').forEach(b => b.onclick = () => { add({ team: +b.dataset.t, kind: 'score', pts: 1, label: 'Touche ' + b.dataset.tz.toLowerCase(), tz: b.dataset.tz }); beep(1200, .12); });
     el.querySelectorAll('[data-bo]').forEach(b => b.onclick = () => { add({ team: +b.dataset.t, kind: 'bonus', pts: +b.dataset.bo, label: 'Bonus +' + b.dataset.bo }); beep(1500, .08); });
     el.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { const t = +b.dataset.t, k = b.dataset.k;
       add({ team: t, kind: k, pts: 0, label: { tir: 'Tir tenté', passe: 'Passe décisive', perte: 'Perte de balle' }[k] }); beep(700, .05); if (k === 'perte' && zonesOn) setPoss(1 - t); });
@@ -219,6 +229,7 @@ TOOL_IMPL.match = function (el) {
         ${row('dont points bonus', s => s.bonus)}
         ${m.coll ? row(`${sp.shot}s marqués`, s => s.marques) + row('Tirs tentés', s => s.tirs) + row('Réussite', s => s.tirs ? Math.round(s.marques / s.tirs * 100) + ' %' : '–') + row('Passes décisives', s => s.passes) + row('Pertes de balle', s => s.pertes) : ''}
         ${m.nz ? Array.from({ length: m.nz }, (_, z) => row(`Zone ${z + 1} atteinte`, s => s.zones[z])).join('') : ''}
+        ${m.sport === 'escrime' ? TOUCH_ZONES.map((z, i) => row(`Touches ${z.toLowerCase()}`, s => (s.touches || [])[i] || 0)).join('') : ''}
       </table>${m.nz ? `<p class="muted" style="margin:8px 0 0;font-size:.8rem">Zone 1 = camp de l'équipe, zone ${m.nz} = près du but adverse.</p>` : ''}</div>
       <div class="section-title"><h2>Déroulé du match</h2></div>
       <div class="card" style="max-height:260px;overflow:auto;padding:4px 12px">${m.ev.length ? m.ev.map(e => `<div class="muted" style="padding:4px 0;border-bottom:1px solid var(--line)"><b style="color:var(--text)">${fmt(e.t * 1000, false)}</b> · ${esc(e.team ? m.b : m.a)} · ${esc(e.label)}</div>`).join('') : '<div class="empty">Aucune action.</div>'}</div>
