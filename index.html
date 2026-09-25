@@ -201,7 +201,7 @@ th{color:var(--muted);font-size:.78rem;text-transform:uppercase}
     <div class="section-title"><h2>Récemment utilisés</h2></div>
     <div class="grid" id="recent-grid"></div>
 
-    <div class="section-title"><h2>Par domaine</h2></div>
+    <div class="section-title"><h2>Par champ d'apprentissage</h2></div>
     <div class="domains" id="domains"></div>
 
   </section>
@@ -255,14 +255,37 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
    ready:true = fonctionnel ; sinon badge "Bientôt"
    ========================================================= */
 const CATS=[
-  {id:'temps',  name:'Chronos & timers',   desc:'Chronomètres, minuteurs, HIIT'},
+  {id:'perf',   name:'Activités de performance', desc:'Athlétisme, natation, musculation'},
+  {id:'art',    name:'Activités gymniques & artistiques', desc:'Parkour · gym, acrosport, cirque, danse à venir'},
+  {id:'duel',   name:'Activités de duel', desc:'Sports collectifs, raquettes, combats'},
+  {id:'appn',   name:'APPN', desc:'Course d\'orientation · escalade, sauvetage à venir'},
+  {id:'temps',  name:'Chronos & timers',   desc:'Outils transversaux'},
   {id:'classe', name:'Gestion de classe',  desc:'Classes, tirages, équipes'},
-  {id:'match',  name:'Matchs & tournois',  desc:'Score, poules, tournois'},
-  {id:'course', name:'Course, athlé & natation', desc:'VMA, orientation, natation'},
-  {id:'muscu',  name:'Muscu & crosstraining', desc:'1RM, journal, WOD, HYROX'},
-  {id:'eval',   name:'Évaluation & suivi', desc:'Grilles, suivi, bilans'},
+  {id:'eval',   name:'Évaluation & suivi', desc:'Résultats, grilles, suivi'},
 ];
 const TOOLS=[
+  {id:'natation', cat:'perf', name:'Natation', desc:'Distance, temps, coups de bras', ready:true},
+  {id:'testvma',  cat:'perf', name:'Test VMA', desc:'Luc Léger, VAMEVAL, 45-15, Astrand', ready:true},
+  {id:'vma',      cat:'perf',name:'VMA & allures',      desc:'Temps de passage selon % VMA', ready:true},
+  {id:'vitesse',  cat:'perf',name:'Vitesse de course',  desc:'Distance + temps → km/h', ready:true},
+  {id:'plots',    cat:'perf',name:'Écartement des plots',desc:'Placer les plots selon la VMA', ready:true},
+  {id:'combine',  cat:'perf', name:'Combiné athlétique', desc:'Duathlon / triathlon · course, saut, lancer', ready:true},
+  {id:'duathlon', cat:'perf', name:'Duathlon athlétique', desc:'Course + lancers · 3 étapes · pénalités', ready:true},
+  {id:'relais',   cat:'perf',name:'Relais',             desc:'Gestion des relais', ready:true},
+  {id:'wod',      cat:'perf', name:'Crosstraining / HYROX', desc:'Blocs, exercices N1-N4, run, time cap', ready:true},
+  {id:'rm',       cat:'perf', name:'Calcul 1RM',         desc:'Charge max + % de travail', ready:true},
+  {id:'journal',  cat:'perf', name:'Journal de musculation',desc:'Carnet d\'entraînement élève', ready:true},
+
+  {id:'parkour',  cat:'art', name:'Parkour', desc:'Sauter, franchir, tourner, freerun · maîtrise', ready:true},
+
+  {id:'match',    cat:'duel', name:'Gestion de match', desc:'Terrain, score, bonus, zones, statistiques', ready:true},
+  {id:'marque',   cat:'duel', name:'Table de marque',    desc:'Score 2 équipes + chrono', ready:true},
+  {id:'poule',    cat:'duel', name:'Championnat (poule)',desc:'Rencontres + classement', ready:true},
+  {id:'tournoi',  cat:'duel', name:'Tournoi à élimination',desc:'Tableau à élimination directe', ready:true},
+  {id:'pyramide', cat:'duel', name:'Pyramide des victoires',desc:'Montée / descente', ready:true},
+
+  {id:'co',       cat:'appn', name:'Course d\'orientation', desc:'Parcours, balises, séances, RK, bilan', ready:true},
+
   {id:'chronos12',cat:'temps', name:'Chronos EPS (12 élèves)', desc:'Chrono central + 12 chronos numérotés', ready:true},
   {id:'chrono',   cat:'temps', name:'Chronomètre',        desc:'Chrono plein écran avec tours', ready:true},
   {id:'multi',    cat:'temps', name:'Multi-chrono',       desc:'Un chrono par élève / groupe',  ready:true},
@@ -277,26 +300,7 @@ const TOOLS=[
   {id:'dispenses',cat:'classe',name:'Dispenses',          desc:'Suivi des inaptitudes', ready:true},
   {id:'oubli',    cat:'classe',name:'Oublis de tenue',    desc:'Compter les oublis', ready:true},
 
-  {id:'match',    cat:'match', name:'Gestion de match', desc:'Terrain, score, bonus, zones, statistiques', ready:true},
-  {id:'marque',   cat:'match', name:'Table de marque',    desc:'Score 2 équipes + chrono', ready:true},
-  {id:'poule',    cat:'match', name:'Championnat (poule)',desc:'Rencontres + classement', ready:true},
-  {id:'tournoi',  cat:'match', name:'Tournoi à élimination',desc:'Tableau à élimination directe', ready:true},
-  {id:'pyramide', cat:'match', name:'Pyramide des victoires',desc:'Montée / descente', ready:true},
-
-  {id:'co',       cat:'course', name:'Course d\'orientation', desc:'Parcours, balises, séances, RK, bilan', ready:true},
-  {id:'natation', cat:'course', name:'Natation', desc:'Distance, temps, coups de bras', ready:true},
-  {id:'testvma',  cat:'course', name:'Test VMA', desc:'Luc Léger, VAMEVAL, 45-15, Astrand', ready:true},
-  {id:'vma',      cat:'course',name:'VMA & allures',      desc:'Temps de passage selon % VMA', ready:true},
-  {id:'vitesse',  cat:'course',name:'Vitesse de course',  desc:'Distance + temps → km/h', ready:true},
-  {id:'plots',    cat:'course',name:'Écartement des plots',desc:'Placer les plots selon la VMA', ready:true},
-  {id:'duathlon', cat:'course', name:'Duathlon athlétique', desc:'Course + lancers · 3 étapes · pénalités', ready:true},
-  {id:'relais',   cat:'course',name:'Relais',             desc:'Gestion des relais', ready:true},
-
-  {id:'wod',      cat:'muscu', name:'Crosstraining / HYROX', desc:'Blocs, exercices N1-N4, run, time cap', ready:true},
-  {id:'rm',       cat:'muscu', name:'Calcul 1RM',         desc:'Charge max + % de travail', ready:true},
-  {id:'journal',  cat:'muscu', name:'Journal de musculation',desc:'Carnet d\'entraînement élève', ready:true},
-
-  {id:'parkour',  cat:'eval', name:'Parkour', desc:'Sauter, franchir, tourner, freerun · maîtrise', ready:true},
+  {id:'resultats',cat:'eval', name:'Résultats des élèves', desc:'Tous les résultats enregistrés par élève', ready:true},
   {id:'grilles',  cat:'eval',  name:'Grilles d\'évaluation',desc:'Critères et niveaux', ready:true},
   {id:'suivi',    cat:'eval',  name:'Tableau de suivi',   desc:'Notes et observations', ready:true},
   {id:'debrief',  cat:'eval',  name:'Questions débrief',  desc:'Questions de fin de séance', ready:true},
@@ -652,6 +656,8 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
 <script src="js/crosstraining.js"></script>
 <script src="js/parkour.js"></script>
 <script src="js/duathlon.js"></script>
+<script src="js/combine.js"></script>
+<script src="js/sauvegardes.js"></script>
 <script src="js/qr.js"></script>
 <script src="js/plus.js"></script>
 <script src="js/musique.js"></script>

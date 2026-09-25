@@ -66,3 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
     <linearGradient id="icoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B8912A"/><stop offset=".55" stop-color="#2F6BD8"/><stop offset="1" stop-color="#0B2A5B"/></linearGradient>
     <linearGradient id="icoGradLight" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E6C76E"/><stop offset="1" stop-color="#8FB6FF"/></linearGradient></defs></svg>`);
 });
+/* Champs d'apprentissage */
+Object.assign(ICONS, {
+  'cat-perf': '<path d="M3 20.5V14h6v6.5M9 20.5V9.5h6v11M15 20.5V12.5h6v8M2 20.5h20"/><path d="M12 3.5l.9 1.8 2 .3-1.45 1.4.35 2L12 8.1l-1.8.9.35-2L9.1 5.6l2-.3z" stroke-width="1.3"/>',
+  'cat-art':  '<circle cx="12" cy="4.5" r="2"/><path d="M12 7v6M12 9l-6-3M12 9l6-3M12 13l-4 7M12 13l4 7"/>',
+  'cat-duel': '<path d="M4 20 14 10M14 10l2-6 4 4-6 2M20 20 10 10M10 10 8 4 4 8l6 2"/>',
+  'cat-appn': '<path d="M2.5 20 9 9l4 6 3-4 5.5 9z"/><circle cx="17" cy="5" r="2"/>',
+});
