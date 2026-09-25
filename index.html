@@ -8,14 +8,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>EPS Tout en 1</title>
 <meta name="apple-mobile-web-app-title" content="EPS Tout en 1">
+<script src="js/icons.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
 :root{
-  --gold:#F2B705; --gold2:#FFD54A; --blue:#1E5BD8; --navy:#0B2A5B; --navy2:#071A3A;
-  --grad:linear-gradient(135deg,#F7C600 0%,#E9A800 22%,#3C7BE0 62%,#0B2A5B 100%);
-  --grad-soft:linear-gradient(135deg,rgba(247,198,0,.16),rgba(30,91,216,.16));
+  --gold:#C9A227; --gold2:#E6C76E; --blue:#1E5BD8; --navy:#0B2A5B; --navy2:#071A3A;
+  --grad:linear-gradient(135deg,#EBD27E 0%,#C9A227 20%,#9C7A1E 38%,#2F6BD8 70%,#0B2A5B 100%);
+  --grad-soft:linear-gradient(135deg,rgba(212,175,55,.16),rgba(30,91,216,.16));
   --bg:#F3F6FC; --card:#FFFFFF; --text:#0E1A33; --muted:#5B6782; --line:#DDE4F2;
   --ok:#1B9E5A; --danger:#D64545; --radius:18px;
   --shadow:0 6px 22px rgba(11,42,91,.10);
@@ -80,7 +81,22 @@ main{max-width:1100px;margin:0 auto;padding:16px}
 .domains{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .domain{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;text-align:left;box-shadow:var(--shadow);position:relative;overflow:hidden}
 .domain::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--grad)}
-.domain .em{font-size:1.6rem}
+.domain .em{display:block;width:34px;height:34px}
+.ico{width:100%;height:100%;display:block}
+.ico-img{width:100%;height:100%;display:block;border-radius:22%;object-fit:cover}
+.tool .ti{padding:9px;width:48px;height:48px}
+.tool .ti .ico-img{border-radius:10px}
+.tool .ti:has(.ico-img){padding:0;background:none}
+.chip .ico,.cat-title .ico{width:18px;height:18px;display:inline-block;vertical-align:-4px;margin-right:4px}
+.chip.active .ico{stroke:#fff}
+.tab .ic .ico{width:26px;height:26px;stroke:currentColor}
+.tab.tools-tab .ic .ico{width:28px;height:28px;stroke:#fff}
+.icon-btn .ico{width:22px;height:22px;stroke:#fff}
+.searchbar span .ico{width:18px;height:18px;stroke:var(--muted)}
+.tool .star{color:var(--muted)}
+.tool .star .ico{width:20px;height:20px;stroke:currentColor}
+.tool .star.on .ico{fill:var(--gold);stroke:var(--gold)}
+@media (prefers-color-scheme: dark){.ico{stroke:url(#icoGradLight)}.ico [fill^="url"]{fill:url(#icoGradLight)}}
 .domain b{display:block;margin-top:6px;font-size:.95rem}
 .domain small{color:var(--muted);font-size:.78rem}
 
@@ -125,7 +141,7 @@ main{max-width:1100px;margin:0 auto;padding:16px}
 .mc input{text-align:center;padding:6px;font-weight:700;border:none;background:transparent}
 .mc .t{font-size:1.6rem;font-weight:900;font-variant-numeric:tabular-nums;margin:4px 0 8px}
 .phase{font-size:1.4rem;font-weight:900;text-align:center;text-transform:uppercase;letter-spacing:2px;padding:10px;border-radius:14px;color:#fff}
-.ph-work{background:linear-gradient(135deg,#F7C600,#E98A00)}
+.ph-work{background:linear-gradient(135deg,#D4AF37,#A67C1A)}
 .ph-rest{background:linear-gradient(135deg,#3C7BE0,#0B2A5B)}
 .ph-prep{background:#7A869F}
 .ph-end{background:var(--ok)}
@@ -135,7 +151,7 @@ main{max-width:1100px;margin:0 auto;padding:16px}
 .team ul{margin:0;padding-left:18px;font-size:.92rem}
 .score-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .score{border-radius:20px;padding:12px;text-align:center;color:#fff}
-.score.a{background:linear-gradient(160deg,#F7C600,#D98E00)}
+.score.a{background:linear-gradient(160deg,#D4AF37,#A67C1A)}
 .score.b{background:linear-gradient(160deg,#3C7BE0,#0B2A5B)}
 .score input{background:rgba(255,255,255,.2);color:#fff;border:none;text-align:center;font-weight:800}
 .score .pts{font-size:clamp(3.5rem,18vw,7rem);font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1}
@@ -167,7 +183,7 @@ th{color:var(--muted);font-size:.78rem;text-transform:uppercase}
     <div class="sub">by Steff64</div>
   </div>
   <div class="spacer"></div>
-  <button class="icon-btn" onclick="go('outils');focusSearch()" aria-label="Rechercher">🔍</button>
+  <button class="icon-btn" onclick="go('outils');focusSearch()" aria-label="Rechercher"><script>document.write(ico("search"))</script></button>
 </div>
 
 <main>
@@ -176,48 +192,39 @@ th{color:var(--muted);font-size:.78rem;text-transform:uppercase}
     <div class="hero">
       <h2>Tous vos outils EPS,<br>au même endroit.</h2>
       <p>Chronos, timers, tirages au sort, équipes, table de marque, calculs VMA… Pensé pour la tablette et le téléphone, en plein cours.</p>
-      <button class="btn btn-white" onclick="go('outils')">🧰 Ouvrir les OUTILS</button>
+      <button class="btn btn-white" onclick="go('outils')">Ouvrir les OUTILS →</button>
     </div>
 
-    <div class="section-title"><h2>⭐ Mes favoris</h2><button class="link" onclick="go('outils')">Gérer</button></div>
+    <div class="section-title"><h2>Mes favoris</h2><button class="link" onclick="go('outils')">Gérer</button></div>
     <div class="grid" id="fav-grid"></div>
 
-    <div class="section-title"><h2>🕘 Récemment utilisés</h2></div>
+    <div class="section-title"><h2>Récemment utilisés</h2></div>
     <div class="grid" id="recent-grid"></div>
 
     <div class="section-title"><h2>Par domaine</h2></div>
     <div class="domains" id="domains"></div>
+
   </section>
 
   <!-- ============ OUTILS ============ -->
   <section class="view" id="view-outils">
-    <div class="searchbar"><span>🔍</span><input id="search" type="search" placeholder="Rechercher un outil (chrono, équipes, VMA…)"></div>
+    <div class="searchbar"><span><script>document.write(ico("search"))</script></span><input id="search" type="search" placeholder="Rechercher un outil (chrono, équipes, VMA…)"></div>
     <div class="chips" id="chips"></div>
     <div id="tools-list"></div>
   </section>
 
   <!-- ============ PLUS ============ -->
   <section class="view" id="view-plus">
-    <div class="section-title"><h2>Données & sauvegarde</h2></div>
-    <div class="card menu-list" style="padding:0">
-      <div class="list-item" onclick="exportData()"><div><b>💾 Exporter mes données</b><div class="muted">Fichier JSON (classes, grilles, suivi, dispenses…)</div></div><span>›</span></div>
-      <div class="list-item" onclick="document.getElementById('imp').click()"><div><b>📥 Importer une sauvegarde</b><div class="muted">Restaurer depuis un fichier JSON</div></div><span>›</span></div>
-      <div class="list-item" onclick="resetAll()"><div><b style="color:var(--danger)">🗑 Tout effacer</b><div class="muted">Nouvelle année scolaire</div></div><span>›</span></div>
-    </div>
+    <div id="plus-menu"></div>
     <input type="file" id="imp" accept="application/json" hidden onchange="importData(this)">
-    <div class="section-title"><h2>À propos</h2></div>
-    <div class="card">
-      <p style="margin:0 0 8px"><b>EPS Tout en 1</b> — version 0.3 · créé par <b>Steff64</b></p>
-      <p class="muted" style="margin:0">Les données restent sur cet appareil (stockage local du navigateur). Aucun compte, aucun serveur. Installable sur l'écran d'accueil : Safari → Partager → « Sur l'écran d'accueil ».</p>
-    </div>
   </section>
 </main>
 
 <!-- ============ TAB BAR ============ -->
 <nav class="tabbar">
-  <button class="tab active" data-tab="accueil" onclick="go('accueil')"><span class="ic">🏠</span>Accueil</button>
-  <button class="tab tools-tab" data-tab="outils" onclick="go('outils')"><span class="ic">🧰</span>OUTILS</button>
-  <button class="tab" data-tab="plus" onclick="go('plus')"><span class="ic">⚙️</span>Plus</button>
+  <button class="tab active" data-tab="accueil" onclick="go('accueil')"><span class="ic"><script>document.write(ico("home"))</script></span>Accueil</button>
+  <button class="tab tools-tab" data-tab="outils" onclick="go('outils')"><span class="ic"><script>document.write(ico("toolbox"))</script></span>OUTILS</button>
+  <button class="tab" data-tab="plus" onclick="go('plus')"><span class="ic"><script>document.write(ico("more"))</script></span>Plus</button>
 </nav>
 
 <!-- ============ ÉCRAN OUTIL ============ -->
@@ -248,44 +255,44 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
    ready:true = fonctionnel ; sinon badge "Bientôt"
    ========================================================= */
 const CATS=[
-  {id:'temps',  em:'⏱', name:'Chronos & timers',   desc:'Chronomètres, minuteurs, HIIT'},
-  {id:'classe', em:'👥', name:'Gestion de classe',  desc:'Classes, tirages, équipes'},
-  {id:'match',  em:'🏆', name:'Matchs & tournois',  desc:'Score, poules, tournois'},
-  {id:'course', em:'🏃', name:'Course & athlé',     desc:'VMA, allures, plots'},
-  {id:'muscu',  em:'🏋️', name:'Musculation',        desc:'1RM, charges, journal'},
-  {id:'eval',   em:'📋', name:'Évaluation & suivi', desc:'Grilles, suivi, bilans'},
+  {id:'temps',  name:'Chronos & timers',   desc:'Chronomètres, minuteurs, HIIT'},
+  {id:'classe', name:'Gestion de classe',  desc:'Classes, tirages, équipes'},
+  {id:'match',  name:'Matchs & tournois',  desc:'Score, poules, tournois'},
+  {id:'course', name:'Course & athlé',     desc:'VMA, allures, plots'},
+  {id:'muscu',  name:'Musculation',        desc:'1RM, charges, journal'},
+  {id:'eval',   name:'Évaluation & suivi', desc:'Grilles, suivi, bilans'},
 ];
 const TOOLS=[
-  {id:'chronos12',cat:'temps', em:'🟢', name:'Chronos EPS (12 élèves)', desc:'Chrono central + 12 chronos numérotés', ready:true},
-  {id:'chrono',   cat:'temps', em:'⏱', name:'Chronomètre',        desc:'Chrono plein écran avec tours', ready:true},
-  {id:'multi',    cat:'temps', em:'🔢', name:'Multi-chrono',       desc:'Un chrono par élève / groupe',  ready:true},
-  {id:'hiit',     cat:'temps', em:'🔥', name:'Timer HIIT / Tabata',desc:'Travail / repos / séries + bips', ready:true},
-  {id:'minuteur', cat:'temps', em:'⏳', name:'Minuteur',           desc:'Compte à rebours avec alarme',  ready:true},
-  {id:'photo',    cat:'temps', em:'📸', name:'Photo-finish',       desc:'Arrivées au ralenti', ready:true},
-  {id:'video',    cat:'temps', em:'🎥', name:'Vidéo différée',     desc:'Retour vidéo en différé', ready:true},
+  {id:'chronos12',cat:'temps', name:'Chronos EPS (12 élèves)', desc:'Chrono central + 12 chronos numérotés', ready:true},
+  {id:'chrono',   cat:'temps', name:'Chronomètre',        desc:'Chrono plein écran avec tours', ready:true},
+  {id:'multi',    cat:'temps', name:'Multi-chrono',       desc:'Un chrono par élève / groupe',  ready:true},
+  {id:'hiit',     cat:'temps', name:'Timer HIIT / Tabata',desc:'Travail / repos / séries + bips', ready:true},
+  {id:'minuteur', cat:'temps', name:'Minuteur',           desc:'Compte à rebours avec alarme',  ready:true},
+  {id:'photo',    cat:'temps', name:'Photo-finish',       desc:'Arrivées au ralenti', ready:true},
+  {id:'video',    cat:'temps', name:'Vidéo différée',     desc:'Retour vidéo en différé', ready:true},
 
-  {id:'classes',  cat:'classe',em:'🗂', name:'Mes classes',        desc:'Créer et gérer les listes', ready:true},
-  {id:'tirage',   cat:'classe',em:'🎲', name:'Tirage au sort',     desc:'Désigner un élève au hasard', ready:true},
-  {id:'equipes',  cat:'classe',em:'🧩', name:'Composition d\'équipes', desc:'Équipes aléatoires équilibrées', ready:true},
-  {id:'dispenses',cat:'classe',em:'🩺', name:'Dispenses',          desc:'Suivi des inaptitudes', ready:true},
-  {id:'oubli',    cat:'classe',em:'👟', name:'Oublis de tenue',    desc:'Compter les oublis', ready:true},
+  {id:'classes',  cat:'classe',name:'Mes classes',        desc:'Créer et gérer les listes', ready:true},
+  {id:'tirage',   cat:'classe',name:'Tirage au sort',     desc:'Désigner un élève au hasard', ready:true},
+  {id:'equipes',  cat:'classe',name:'Composition d\'équipes', desc:'Équipes aléatoires équilibrées', ready:true},
+  {id:'dispenses',cat:'classe',name:'Dispenses',          desc:'Suivi des inaptitudes', ready:true},
+  {id:'oubli',    cat:'classe',name:'Oublis de tenue',    desc:'Compter les oublis', ready:true},
 
-  {id:'marque',   cat:'match', em:'🆚', name:'Table de marque',    desc:'Score 2 équipes + chrono', ready:true},
-  {id:'poule',    cat:'match', em:'🔁', name:'Championnat (poule)',desc:'Rencontres + classement', ready:true},
-  {id:'tournoi',  cat:'match', em:'🏅', name:'Tournoi à élimination',desc:'Tableau à élimination directe', ready:true},
-  {id:'pyramide', cat:'match', em:'🔺', name:'Pyramide des victoires',desc:'Montée / descente', ready:true},
+  {id:'marque',   cat:'match', name:'Table de marque',    desc:'Score 2 équipes + chrono', ready:true},
+  {id:'poule',    cat:'match', name:'Championnat (poule)',desc:'Rencontres + classement', ready:true},
+  {id:'tournoi',  cat:'match', name:'Tournoi à élimination',desc:'Tableau à élimination directe', ready:true},
+  {id:'pyramide', cat:'match', name:'Pyramide des victoires',desc:'Montée / descente', ready:true},
 
-  {id:'vma',      cat:'course',em:'💨', name:'VMA & allures',      desc:'Temps de passage selon % VMA', ready:true},
-  {id:'vitesse',  cat:'course',em:'📏', name:'Vitesse de course',  desc:'Distance + temps → km/h', ready:true},
-  {id:'plots',    cat:'course',em:'🔶', name:'Écartement des plots',desc:'Placer les plots selon la VMA', ready:true},
-  {id:'relais',   cat:'course',em:'🔄', name:'Relais',             desc:'Gestion des relais', ready:true},
+  {id:'vma',      cat:'course',name:'VMA & allures',      desc:'Temps de passage selon % VMA', ready:true},
+  {id:'vitesse',  cat:'course',name:'Vitesse de course',  desc:'Distance + temps → km/h', ready:true},
+  {id:'plots',    cat:'course',name:'Écartement des plots',desc:'Placer les plots selon la VMA', ready:true},
+  {id:'relais',   cat:'course',name:'Relais',             desc:'Gestion des relais', ready:true},
 
-  {id:'rm',       cat:'muscu', em:'💪', name:'Calcul 1RM',         desc:'Charge max + % de travail', ready:true},
-  {id:'journal',  cat:'muscu', em:'📓', name:'Journal de musculation',desc:'Carnet d\'entraînement élève', ready:true},
+  {id:'rm',       cat:'muscu', name:'Calcul 1RM',         desc:'Charge max + % de travail', ready:true},
+  {id:'journal',  cat:'muscu', name:'Journal de musculation',desc:'Carnet d\'entraînement élève', ready:true},
 
-  {id:'grilles',  cat:'eval',  em:'✅', name:'Grilles d\'évaluation',desc:'Critères et niveaux', ready:true},
-  {id:'suivi',    cat:'eval',  em:'📈', name:'Tableau de suivi',   desc:'Notes et observations', ready:true},
-  {id:'debrief',  cat:'eval',  em:'💬', name:'Questions débrief',  desc:'Questions de fin de séance', ready:true},
+  {id:'grilles',  cat:'eval',  name:'Grilles d\'évaluation',desc:'Critères et niveaux', ready:true},
+  {id:'suivi',    cat:'eval',  name:'Tableau de suivi',   desc:'Notes et observations', ready:true},
+  {id:'debrief',  cat:'eval',  name:'Questions débrief',  desc:'Questions de fin de séance', ready:true},
 ];
 const T=id=>TOOLS.find(t=>t.id===id);
 
@@ -306,26 +313,26 @@ function focusSearch(){setTimeout(()=>document.getElementById('search').focus(),
 function toolCard(t){
   const fav=DB.favs.includes(t.id);
   return `<div class="tool ${t.ready?'':'soon'}" role="button" onclick="openTool('${t.id}')">
-    <button class="star ${fav?'on':''}" onclick="event.stopPropagation();toggleFav('${t.id}')" aria-label="Favori">${fav?'★':'☆'}</button>
+    <button class="star ${fav?'on':''}" onclick="event.stopPropagation();toggleFav('${t.id}')" aria-label="Favori">${ico('star')}</button>
     ${t.ready?'':'<span class="badge">Bientôt</span>'}
-    <div class="ti">${t.em}</div><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></div>`;
+    <div class="ti">${ico(t.id)}</div><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></div>`;
 }
 function renderHome(){
   const f=DB.favs.map(T).filter(Boolean);
   document.getElementById('fav-grid').innerHTML=f.length?f.map(toolCard).join(''):'<div class="empty card" style="grid-column:1/-1">Touchez ☆ sur un outil pour l\'ajouter ici.</div>';
   const r=DB.recent.map(T).filter(Boolean).slice(0,4);
   document.getElementById('recent-grid').innerHTML=r.length?r.map(toolCard).join(''):'<div class="empty card" style="grid-column:1/-1">Aucun outil utilisé pour l\'instant.</div>';
-  document.getElementById('domains').innerHTML=CATS.map(c=>`<button class="domain" onclick="currentCat='${c.id}';go('outils')"><span class="em">${c.em}</span><b>${c.name}</b><small>${c.desc}</small></button>`).join('');
+  document.getElementById('domains').innerHTML=CATS.map(c=>`<button class="domain" onclick="currentCat='${c.id}';go('outils')"><span class="em">${ico('cat-'+c.id)}</span><b>${c.name}</b><small>${c.desc}</small></button>`).join('');
 }
 function renderTools(){
   const q=document.getElementById('search').value.trim().toLowerCase();
-  document.getElementById('chips').innerHTML=[{id:'all',em:'✨',name:'Tous'},{id:'fav',em:'⭐',name:'Favoris'},...CATS]
-    .map(c=>`<button class="chip ${currentCat===c.id?'active':''}" onclick="currentCat='${c.id}';renderTools()">${c.em} ${c.name}</button>`).join('');
+  document.getElementById('chips').innerHTML=[{id:'all',name:'Tous'},{id:'fav',name:'Favoris',ic:'star'},...CATS]
+    .map(c=>`<button class="chip ${currentCat===c.id?'active':''}" onclick="currentCat='${c.id}';renderTools()">${c.id==='all'?'':ico(c.ic||'cat-'+c.id)}${c.name}</button>`).join('');
   let list=TOOLS.filter(t=>!q||(t.name+' '+t.desc).toLowerCase().includes(q));
   if(currentCat==='fav') list=list.filter(t=>DB.favs.includes(t.id));
   else if(currentCat!=='all') list=list.filter(t=>t.cat===currentCat);
   let html='';
-  CATS.forEach(c=>{const l=list.filter(t=>t.cat===c.id); if(l.length) html+=`<div class="cat-title">${c.em} ${c.name}</div><div class="grid">${l.map(toolCard).join('')}</div>`;});
+  CATS.forEach(c=>{const l=list.filter(t=>t.cat===c.id); if(l.length) html+=`<div class="cat-title">${ico('cat-'+c.id)}${c.name}</div><div class="grid">${l.map(toolCard).join('')}</div>`;});
   document.getElementById('tools-list').innerHTML=html||'<div class="empty">Aucun outil trouvé.</div>';
 }
 document.getElementById('search').addEventListener('input',renderTools);
@@ -341,10 +348,10 @@ let currentTool=null, cleanup=null;
 function openTool(id){
   const t=T(id); currentTool=id;
   DB.recent=[id,...DB.recent.filter(x=>x!==id)].slice(0,8); save();
-  document.getElementById('screen-title').textContent=t.em+'  '+t.name;
+  document.getElementById('screen-title').textContent=t.name; document.getElementById('screen-star').style.visibility='';
   updateScreenStar();
   const body=document.getElementById('screen-body'); body.className='body';
-  if(!t.ready){ body.innerHTML=`<div class="card empty"><div style="font-size:3rem">${t.em}</div><h3 style="margin:8px 0">${esc(t.name)}</h3><p>Cet outil arrive dans une prochaine version.</p></div>`; }
+  if(!t.ready){ body.innerHTML=`<div class="card empty"><div style="width:60px;margin:auto">${ico(t.id)}</div><h3 style="margin:8px 0">${esc(t.name)}</h3><p>Cet outil arrive dans une prochaine version.</p></div>`; }
   else { cleanup=TOOL_IMPL[id](body)||null; }
   document.getElementById('screen').classList.add('open');
   requestWake();
@@ -467,11 +474,13 @@ minuteur(el){
 /* ---------- Mes classes ---------- */
 classes(el){
   const draw=()=>{
-    el.innerHTML=`<div class="card"><h3>Nouvelle classe</h3><label>Nom</label><input id="cn" placeholder="ex : 6E1">
+    el.innerHTML=`<div class="card" style="display:flex;align-items:center;gap:12px;background:var(--grad-soft)"><div style="flex:1"><div class="muted">Année scolaire</div><b style="font-size:1.15rem">${esc(DB.annee||'')}</b></div><button class="btn btn-grad" style="flex:0 0 auto" id="ny">🗓 Nouvelle année scolaire</button></div>
+      <div class="card" style="margin-top:12px"><h3>Nouvelle classe</h3><label>Nom</label><input id="cn" placeholder="ex : 6E1">
       <label>Élèves (un par ligne, ou collés depuis un tableur)</label><textarea id="cl" placeholder="DUPONT Léa&#10;MARTIN Hugo"></textarea>
       <button class="btn btn-grad btn-block" style="margin-top:10px" id="add">＋ Enregistrer la classe</button></div>
       <div class="section-title"><h2>Mes classes (${DB.classes.length})</h2></div>
       <div class="card" style="padding:0">${DB.classes.length?DB.classes.map((c,i)=>`<div class="list-item"><div><b>${esc(c.name)}</b><div class="muted">${c.students.length} élèves</div></div><div class="row" style="flex:0 0 auto"><button class="btn btn-ghost" data-e="${i}">✏️</button><button class="btn btn-ghost" data-d="${i}">🗑</button></div></div>`).join(''):'<div class="empty">Aucune classe enregistrée.</div>'}</div>`;
+    el.querySelector('#ny').onclick=()=>openNewYear('classes');
     el.querySelector('#add').onclick=()=>{const name=el.querySelector('#cn').value.trim(),st=namesFrom('cl');
       if(!name||!st.length) return toast('Nom et élèves requis');
       const ex=DB.classes.findIndex(c=>c.name===name); if(ex>=0) DB.classes[ex].students=st; else DB.classes.push({name,students:st});
@@ -506,7 +515,7 @@ equipes(el){
     <button class="btn btn-grad btn-block" style="margin-top:12px" id="go">🧩 Former les équipes</button></div>
     <div class="teams" id="tr"></div>`;
   bindClassToTextarea('es','el');
-  const cols=['#F2B705','#1E5BD8','#E9A800','#0B2A5B','#3C7BE0','#C98A00','#5B8DEF','#7A5C00'];
+  const cols=['#C9A227','#1E5BD8','#B8912A','#0B2A5B','#3C7BE0','#9C7A22','#5B8DEF','#7A5C00'];
   el.querySelector('#go').onclick=()=>{const names=shuffle(namesFrom('el')); if(!names.length) return toast('Ajoutez des élèves');
     const v=Math.max(1,+el.querySelector('#v').value||1); const n=el.querySelector('#mode').value==='n'?Math.min(v,names.length):Math.ceil(names.length/v);
     const teams=Array.from({length:n},()=>[]); names.forEach((x,i)=>teams[i%n].push(x));
@@ -611,15 +620,15 @@ rm(el){
    ========================================================= */
 function exportData(){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eps-tout-en-1-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eps-tout-en-1-'+new Date().toISOString().slice(0,10)+'.json';a.click();if(typeof renderPlus==='function')renderPlus();
   toast('Sauvegarde exportée ✔');
 }
 function importData(inp){
   const f=inp.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const d=JSON.parse(r.result);DB=Object.assign({favs:[],recent:[],classes:[],dispenses:[],oublis:{},journal:[],grilles:[],suivi:{},debrief:[]},d);save();renderHome();toast('Données restaurées ✔');}catch(e){toast('Fichier invalide');}inp.value='';};
+  r.onload=()=>{try{const d=JSON.parse(r.result);DB=Object.assign({favs:[],recent:[],classes:[],dispenses:[],oublis:{},journal:[],grilles:[],suivi:{},debrief:[],annee:DB.annee},d);save();renderHome();toast('Données restaurées ✔');if(typeof renderPlusYear==='function')renderPlusYear();}catch(e){toast('Fichier invalide');}inp.value='';};
   r.readAsText(f);
 }
-function resetAll(){ if(confirm('Effacer toutes les données (classes, favoris…) ?')){DB={favs:[],recent:[],classes:[],dispenses:[],oublis:{},journal:[],grilles:[],suivi:{},debrief:[]};save();renderHome();toast('Données effacées');} }
+function resetAll(){ if(confirm('Effacer toutes les données (classes, favoris…) ?')){DB={favs:[],recent:[],classes:[],dispenses:[],oublis:{},journal:[],grilles:[],suivi:{},debrief:[],annee:DB.annee};save();renderHome();toast('Données effacées');} }
 
 /* Démarrage */
 renderHome();
@@ -627,5 +636,7 @@ const h=location.hash.slice(1); if(['outils','plus'].includes(h)) go(h);
 if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 <script src="js/outils-plus.js"></script>
+<script src="js/qr.js"></script>
+<script src="js/plus.js"></script>
 </body>
 </html>
