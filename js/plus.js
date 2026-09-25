@@ -2,9 +2,10 @@
    EPS Tout en 1 — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '0.8';
+const APP_VERSION = '0.9';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-tout-en-1/';
 const CHANGELOG = [
+  { v: '0.9', items: ['Correctif : affichage de la nouvelle icône sur iPad'] },
   { v: '0.8', items: ['Nouvelle icône de l\'app'] },
   { v: '0.7', items: ['Couleur or (au lieu de jaune)', 'Menu Plus : Partager l\'app, Confidentialité & RGPD, À propos, Mise à jour, Nouvelle année scolaire'] },
   { v: '0.6', items: ['Nouvelles icônes originales', 'Logo Chronos EPS sur son outil'] },
@@ -88,7 +89,7 @@ function openShare() {
 /* ---------- ℹ️ À propos ---------- */
 function openAbout() {
   openPanel('À propos', el => {
-    el.innerHTML = `<div class="hero" style="text-align:center"><img class="logo" src="icons/icon-192.png" alt="" style="margin:0 auto 10px;width:72px;height:72px;border-radius:18px">
+    el.innerHTML = `<div class="hero" style="text-align:center"><img class="logo" src="icons/icone-v2-192.png" alt="" style="margin:0 auto 10px;width:72px;height:72px;border-radius:18px">
         <h2>EPS Tout en 1</h2><p style="margin:6px auto 0">by <b>Steff64</b> · version ${APP_VERSION}</p></div>
       <div class="card doc" style="margin-top:14px">
         <h3>🎯 L'objectif</h3>
