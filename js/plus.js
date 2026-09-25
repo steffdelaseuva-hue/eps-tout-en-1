@@ -2,9 +2,10 @@
    EPS Tout en 1 — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '1.2';
+const APP_VERSION = '1.3';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-tout-en-1/';
 const CHANGELOG = [
+  { v: '1.3', items: ['Bouton « Écouter de la musique » en haut de l\'app (Apple Music, Spotify, Deezer, YouTube Music)'] },
   { v: '1.2', items: ['Import : fichiers Numbers reconnus, avec la marche à suivre pour les exporter en Excel'] },
   { v: '1.1', items: ['Mes classes : import de fichiers CSV / Excel', 'Bouton « ＋ Élève » pour ajouter un élève en cours d\'année'] },
   { v: '1.0', items: ['Nouvel outil Test VMA : Luc Léger, VAMEVAL, 45-15, Astrand'] },
