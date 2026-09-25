@@ -14,6 +14,7 @@ const SPORTS = {
   rugby:    { name: 'Rugby', coll: true, zones: true, shot: 'Essai', type: 'temps', dur: 10,
               score: [{ l: 'Essai +5', p: 5, try: true }, { l: 'Transfo +2', p: 2 }, { l: 'Pénalité / drop +3', p: 3 }] },
   badminton:{ name: 'Badminton', coll: false, type: 'points', target: 21, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
+  shortennis:{ name: 'Shortennis', coll: false, type: 'points', target: 11, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
   tennis:   { name: 'Tennis', coll: false, type: 'points', target: 11, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
   tt:       { name: 'Tennis de table', coll: false, type: 'points', target: 11, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
 };
@@ -39,6 +40,8 @@ function courtSVG(sport) {
     case 'badminton': return { vb: '0 0 268 122', bg: '#2E8B6B', svg: `<rect x="4" y="4" width="260" height="114" ${L}/><line x1="4" y1="13" x2="264" y2="13" ${L}/><line x1="4" y1="109" x2="264" y2="109" ${L}/>
       <line x1="134" y1="0" x2="134" y2="122" stroke="#fff" stroke-width="3"/><line x1="94" y1="4" x2="94" y2="118" ${L}/><line x1="174" y1="4" x2="174" y2="118" ${L}/><line x1="19" y1="4" x2="19" y2="118" ${L}/><line x1="249" y1="4" x2="249" y2="118" ${L}/>
       <line x1="4" y1="61" x2="94" y2="61" ${L}/><line x1="174" y1="61" x2="264" y2="61" ${L}/>` };
+    case 'shortennis': return { vb: '0 0 268 122', bg: '#C8663A', svg: `<rect x="4" y="4" width="260" height="114" ${L}/><line x1="134" y1="0" x2="134" y2="122" stroke="#fff" stroke-width="3"/>
+      <line x1="94" y1="4" x2="94" y2="118" ${L}/><line x1="174" y1="4" x2="174" y2="118" ${L}/><line x1="4" y1="61" x2="94" y2="61" ${L}/><line x1="174" y1="61" x2="264" y2="61" ${L}/>` };
     case 'tennis': return { vb: '0 0 250 124', bg: '#3C7BE0', svg: `<rect x="6" y="6" width="238" height="112" stroke="#fff" stroke-width="1.6" fill="#2E62B8"/><line x1="6" y1="20" x2="244" y2="20" ${L}/><line x1="6" y1="104" x2="244" y2="104" ${L}/>
       <line x1="125" y1="0" x2="125" y2="124" stroke="#fff" stroke-width="3"/><line x1="61" y1="20" x2="61" y2="104" ${L}/><line x1="189" y1="20" x2="189" y2="104" ${L}/><line x1="61" y1="62" x2="189" y2="62" ${L}/>` };
     case 'tt': return { vb: '0 0 274 152', bg: '#1F2A44', svg: `<rect x="6" y="6" width="262" height="140" fill="#1E5BD8" stroke="#fff" stroke-width="2.5"/><line x1="6" y1="76" x2="268" y2="76" stroke="#fff" stroke-width="1"/>
