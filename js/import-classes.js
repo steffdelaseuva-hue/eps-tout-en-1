@@ -83,7 +83,16 @@ function parseHTMLTable(text) {
 }
 async function readClassFile(file) {
   const buf = await file.arrayBuffer(), u8 = new Uint8Array(buf);
-  if (u8[0] === 0x50 && u8[1] === 0x4B) return parseXLSX(buf);                               // .xlsx
+  const NUMBERS_MSG = 'Fichier Numbers : il faut d\'abord l\'exporter en Excel.\n\n'
+    + 'Sur iPad / iPhone : ouvrez le fichier dans Numbers → bouton « … » → Exporter → Excel, puis enregistrez-le dans Fichiers.\n\n'
+    + 'Sur Mac : Numbers → menu Fichier → Exporter vers → Excel…\n\n'
+    + 'Importez ensuite le fichier .xlsx obtenu.';
+  if (/\.numbers$/i.test(file.name)) throw new Error(NUMBERS_MSG);
+  if (u8[0] === 0x50 && u8[1] === 0x4B) {
+    const z = await unzip(buf);
+    if (z.names.some(n => /^Index\/.*\.iwa$/.test(n))) throw new Error(NUMBERS_MSG);
+    return parseXLSX(buf);                                                                     // .xlsx
+  }
   if (u8[0] === 0xD0 && u8[1] === 0xCF) throw new Error('Ancien format Excel (.xls 97-2003). Dans Excel ou Numbers, enregistrez le fichier en .xlsx ou .csv puis réessayez.');
   const text = decodeText(buf);
   if (/^\s*</.test(text)) return parseHTMLTable(text);                                         // .xls exporté en HTML
@@ -157,8 +166,8 @@ function openClassImport(el, sheets, fileName, back) {
 TOOL_IMPL.classes = function (el) {
   const draw = () => {
     el.innerHTML = `<div class="card" style="display:flex;align-items:center;gap:12px;background:var(--grad-soft)"><div style="flex:1"><div class="muted">Année scolaire</div><b style="font-size:1.15rem;white-space:nowrap">${esc(DB.annee || '')}</b></div><button class="btn btn-grad" style="flex:0 0 auto;font-size:.85rem;padding:10px 12px" id="ny">🗓 Nouvelle année</button></div>
-      <div class="card" style="margin-top:12px"><h3>Importer mes classes</h3><p class="muted" style="margin:4px 0 10px">Fichier CSV ou Excel (.xlsx) : export Pronote, ENT ou tableur. Une ou plusieurs classes à la fois.</p>
-        <button class="btn btn-grad btn-block" id="imp">📥 Importer un fichier CSV / Excel</button><input type="file" id="f" accept=".csv,.txt,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden></div>
+      <div class="card" style="margin-top:12px"><h3>Importer mes classes</h3><p class="muted" style="margin:4px 0 10px">Fichier CSV ou Excel (.xlsx) : export Pronote, ENT ou tableur. Une ou plusieurs classes à la fois. Fichier Numbers : l'app vous indique comment l'exporter en Excel.</p>
+        <button class="btn btn-grad btn-block" id="imp">📥 Importer un fichier CSV / Excel</button><input type="file" id="f" accept=".csv,.txt,.xlsx,.xls,.numbers,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden></div>
       <div class="card" style="margin-top:12px"><h3>Nouvelle classe</h3><label>Nom</label><input id="cn" placeholder="ex : 6E1">
       <label>Élèves (un par ligne, ou collés depuis un tableur)</label><textarea id="cl" placeholder="DUPONT Léa&#10;MARTIN Hugo"></textarea>
       <button class="btn btn-grad btn-block" style="margin-top:10px" id="add">＋ Enregistrer la classe</button></div>
