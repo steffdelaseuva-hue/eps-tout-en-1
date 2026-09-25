@@ -1,5 +1,5 @@
 // EPS Tout en 1 — fonctionnement hors ligne (réseau d'abord, cache en secours)
-const CACHE = 'eps-tout-en-1-v7';
+const CACHE = 'eps-tout-en-1-v8';
 const FILES = ['./', './index.html', './js/icons.js', './js/outils-plus.js', './js/qr.js', './js/plus.js', './outils/chronos-eps.html',
   './manifest.webmanifest', './icons/icon-192.png', './icons/chronos-eps.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
