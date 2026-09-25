@@ -258,7 +258,7 @@ const CATS=[
   {id:'temps',  name:'Chronos & timers',   desc:'Chronomètres, minuteurs, HIIT'},
   {id:'classe', name:'Gestion de classe',  desc:'Classes, tirages, équipes'},
   {id:'match',  name:'Matchs & tournois',  desc:'Score, poules, tournois'},
-  {id:'course', name:'Course & athlé',     desc:'VMA, allures, plots'},
+  {id:'course', name:'Course, athlé & natation', desc:'VMA, orientation, natation'},
   {id:'muscu',  name:'Musculation',        desc:'1RM, charges, journal'},
   {id:'eval',   name:'Évaluation & suivi', desc:'Grilles, suivi, bilans'},
 ];
@@ -284,6 +284,7 @@ const TOOLS=[
   {id:'pyramide', cat:'match', name:'Pyramide des victoires',desc:'Montée / descente', ready:true},
 
   {id:'co',       cat:'course', name:'Course d\'orientation', desc:'Parcours, balises, séances, RK, bilan', ready:true},
+  {id:'natation', cat:'course', name:'Natation', desc:'Distance, temps, coups de bras', ready:true},
   {id:'testvma',  cat:'course', name:'Test VMA', desc:'Luc Léger, VAMEVAL, 45-15, Astrand', ready:true},
   {id:'vma',      cat:'course',name:'VMA & allures',      desc:'Temps de passage selon % VMA', ready:true},
   {id:'vitesse',  cat:'course',name:'Vitesse de course',  desc:'Distance + temps → km/h', ready:true},
@@ -644,6 +645,7 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
 <script src="js/niveaux.js"></script>
 <script src="js/match.js"></script>
 <script src="js/orientation.js"></script>
+<script src="js/natation.js"></script>
 <script src="js/qr.js"></script>
 <script src="js/plus.js"></script>
 <script src="js/musique.js"></script>

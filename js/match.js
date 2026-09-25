@@ -13,6 +13,8 @@ const SPORTS = {
   football: { name: 'Football', coll: true, zones: false, shot: 'But', type: 'temps', dur: 10, score: [{ l: 'But +1', p: 1 }] },
   rugby:    { name: 'Rugby', coll: true, zones: true, shot: 'Essai', type: 'temps', dur: 10,
               score: [{ l: 'Essai +5', p: 5, try: true }, { l: 'Transfo +2', p: 2 }, { l: 'Pénalité / drop +3', p: 3 }] },
+  ultimate: { name: 'Ultimate', coll: true, zones: true, shot: 'Point', type: 'temps', dur: 10, score: [{ l: 'Point +1', p: 1 }] },
+  volley:   { name: 'Volley-ball', coll: false, type: 'points', target: 25, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
   badminton:{ name: 'Badminton', coll: false, type: 'points', target: 21, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
   shortennis:{ name: 'Shortennis', coll: false, type: 'points', target: 11, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
   tennis:   { name: 'Tennis', coll: false, type: 'points', target: 11, ecart: true, score: [{ l: 'Point +1', p: 1 }] },
@@ -39,6 +41,10 @@ function courtSVG(sport) {
       <line x1="35" y1="5" x2="35" y2="205" ${L}/><line x1="325" y1="5" x2="325" y2="205" ${L}/><line x1="101" y1="5" x2="101" y2="205" ${L}/><line x1="259" y1="5" x2="259" y2="205" ${L}/>
       <line x1="180" y1="5" x2="180" y2="205" ${L}/><line x1="150" y1="5" x2="150" y2="205" ${L} stroke-dasharray="5 5"/><line x1="210" y1="5" x2="210" y2="205" ${L} stroke-dasharray="5 5"/>
       <path d="M35 92v26M29 95h12M325 92v26M319 95h12" stroke="#fff" stroke-width="2"/>` };
+    case 'ultimate': return { vb: '0 0 400 148', bg: '#2E8B57', svg: `<rect x="4" y="4" width="392" height="140" ${L}/><rect x="4" y="4" width="70" height="140" fill="rgba(255,255,255,.14)"/><rect x="326" y="4" width="70" height="140" fill="rgba(255,255,255,.14)"/>
+      <line x1="74" y1="4" x2="74" y2="144" ${L}/><line x1="326" y1="4" x2="326" y2="144" ${L}/><line x1="200" y1="4" x2="200" y2="144" ${L} stroke-dasharray="4 6" opacity=".6"/>` };
+    case 'volley': return { vb: '0 0 190 100', bg: '#E08A3C', svg: `<rect x="5" y="5" width="180" height="90" stroke="#fff" stroke-width="1.6" fill="#E9A05A"/><line x1="95" y1="0" x2="95" y2="100" stroke="#fff" stroke-width="3"/>
+      <line x1="65" y1="5" x2="65" y2="95" ${L}/><line x1="125" y1="5" x2="125" y2="95" ${L}/>` };
     case 'badminton': return { vb: '0 0 268 122', bg: '#2E8B6B', svg: `<rect x="4" y="4" width="260" height="114" ${L}/><line x1="4" y1="13" x2="264" y2="13" ${L}/><line x1="4" y1="109" x2="264" y2="109" ${L}/>
       <line x1="134" y1="0" x2="134" y2="122" stroke="#fff" stroke-width="3"/><line x1="94" y1="4" x2="94" y2="118" ${L}/><line x1="174" y1="4" x2="174" y2="118" ${L}/><line x1="19" y1="4" x2="19" y2="118" ${L}/><line x1="249" y1="4" x2="249" y2="118" ${L}/>
       <line x1="4" y1="61" x2="94" y2="61" ${L}/><line x1="174" y1="61" x2="264" y2="61" ${L}/>` };
@@ -107,7 +113,7 @@ TOOL_IMPL.match = function (el) {
         ${S.type === 'temps' ? `<label>Durée (minutes)</label><input id="du" type="number" min="1" value="${S.dur}">`
           : `<label>Points à atteindre</label><input id="tg" type="number" min="1" value="${S.target}"><label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="ec" ${S.ecart ? 'checked' : ''} style="width:auto"> 2 points d'écart pour gagner</label>`}
         <label>Boutons « points bonus » à afficher</label><div class="tog" id="bo">${BONUS_VALUES.map(v => `<button data-b="${v}" class="${S.bonus.includes(v) ? 'on' : ''}">+${v}</button>`).join('')}</div>
-        ${sp.coll ? `<label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="st" ${S.stats ? 'checked' : ''} style="width:auto"> Statistiques : tirs tentés, ${sp.shot === 'Essai' ? 'essais' : sp.shot === 'Panier' ? 'paniers' : 'buts'} marqués, pertes de balle, passes décisives</label>` : ''}
+        ${sp.coll ? `<label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="st" ${S.stats ? 'checked' : ''} style="width:auto"> Statistiques : tirs tentés, ${sp.shot === 'Essai' ? 'essais' : sp.shot === 'Panier' ? 'paniers' : sp.shot === 'Point' ? 'points' : 'buts'} marqués, pertes de balle, passes décisives</label>` : ''}
         ${sp.zones ? `<label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="zo" ${S.zones ? 'checked' : ''} style="width:auto"> Zones visées (progression du ballon sur le terrain)</label>
           <div id="nzw" style="display:${S.zones ? 'block' : 'none'}"><label>Nombre de zones dans la longueur</label><div class="tog" id="nz">${[3, 4, 5].map(n => `<button data-n="${n}" class="${S.nz === n ? 'on' : ''}">${n} zones</button>`).join('')}</div></div>` : ''}
       </div>
