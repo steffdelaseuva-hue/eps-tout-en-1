@@ -2,9 +2,10 @@
    EPS Tout en 1 — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '1.9';
+const APP_VERSION = '2.0';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-tout-en-1/';
 const CHANGELOG = [
+  { v: '2.0', items: ['Nouvel outil Crosstraining / HYROX : épreuves en blocs, familles, exercices N1-N4, run, groupes duo/trio/quatuor, time cap, écart de temps'] },
   { v: '1.9', items: ['Gestion de match : Ultimate et Volley-ball', 'Nouvel outil Natation : distance, temps, coups de bras'] },
   { v: '1.8', items: ['Nouvel outil Course d\'orientation : parcours, balises niv. 1/2/3, obligatoires/facultatives, pénalités, séances, RK, bilan cumulé'] },
   { v: '1.7', items: ['Gestion de match : ajout de l\'escrime (piste, touches casque / cou / buste / bras / dos)'] },

@@ -259,7 +259,7 @@ const CATS=[
   {id:'classe', name:'Gestion de classe',  desc:'Classes, tirages, équipes'},
   {id:'match',  name:'Matchs & tournois',  desc:'Score, poules, tournois'},
   {id:'course', name:'Course, athlé & natation', desc:'VMA, orientation, natation'},
-  {id:'muscu',  name:'Musculation',        desc:'1RM, charges, journal'},
+  {id:'muscu',  name:'Muscu & crosstraining', desc:'1RM, journal, WOD, HYROX'},
   {id:'eval',   name:'Évaluation & suivi', desc:'Grilles, suivi, bilans'},
 ];
 const TOOLS=[
@@ -291,6 +291,7 @@ const TOOLS=[
   {id:'plots',    cat:'course',name:'Écartement des plots',desc:'Placer les plots selon la VMA', ready:true},
   {id:'relais',   cat:'course',name:'Relais',             desc:'Gestion des relais', ready:true},
 
+  {id:'wod',      cat:'muscu', name:'Crosstraining / HYROX', desc:'Blocs, exercices N1-N4, run, time cap', ready:true},
   {id:'rm',       cat:'muscu', name:'Calcul 1RM',         desc:'Charge max + % de travail', ready:true},
   {id:'journal',  cat:'muscu', name:'Journal de musculation',desc:'Carnet d\'entraînement élève', ready:true},
 
@@ -646,6 +647,7 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
 <script src="js/match.js"></script>
 <script src="js/orientation.js"></script>
 <script src="js/natation.js"></script>
+<script src="js/crosstraining.js"></script>
 <script src="js/qr.js"></script>
 <script src="js/plus.js"></script>
 <script src="js/musique.js"></script>
