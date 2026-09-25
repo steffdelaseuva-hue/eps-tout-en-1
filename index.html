@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B2A5B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>EPS Tout en 1</title>
+<meta name="apple-mobile-web-app-title" content="EPS Tout en 1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root{
+  --gold:#F2B705; --gold2:#FFD54A; --blue:#1E5BD8; --navy:#0B2A5B; --navy2:#071A3A;
+  --grad:linear-gradient(135deg,#F7C600 0%,#E9A800 22%,#3C7BE0 62%,#0B2A5B 100%);
+  --grad-soft:linear-gradient(135deg,rgba(247,198,0,.16),rgba(30,91,216,.16));
+  --bg:#F3F6FC; --card:#FFFFFF; --text:#0E1A33; --muted:#5B6782; --line:#DDE4F2;
+  --ok:#1B9E5A; --danger:#D64545; --radius:18px;
+  --shadow:0 6px 22px rgba(11,42,91,.10);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#07122A; --card:#0F1E3F; --text:#EAF0FF; --muted:#9AA8C7; --line:#1F3363; --shadow:0 6px 22px rgba(0,0,0,.35); }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font:inherit;color:var(--text);background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+textarea{min-height:130px;resize:vertical}
+label{font-size:.85rem;color:var(--muted);font-weight:600;display:block;margin:10px 0 5px}
+h1,h2,h3{margin:0}
+
+/* ---------- HEADER ---------- */
+.topbar{position:sticky;top:0;z-index:20;background:var(--grad);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 18px rgba(11,42,91,.25)}
+.logo{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:grid;place-items:center;font-weight:900;font-size:1rem;letter-spacing:-.5px;border:1.5px solid rgba(255,255,255,.45)}
+.topbar h1{font-size:1.15rem;font-weight:800;letter-spacing:.2px;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.topbar .sub{font-size:.72rem;opacity:.9}
+.topbar .spacer{flex:1}
+.icon-btn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.18);font-size:1.15rem}
+
+/* ---------- TABS (bottom nav) ---------- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 8px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px rgba(11,42,91,.08)}
+.tab{flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:14px;color:var(--muted);font-size:.72rem;font-weight:700;letter-spacing:.3px}
+.tab .ic{font-size:1.35rem;line-height:1}
+.tab.active{color:var(--navy)}
+@media (prefers-color-scheme: dark){.tab.active{color:var(--gold2)}}
+.tab.tools-tab{position:relative}
+.tab.tools-tab .ic{width:52px;height:52px;margin-top:-24px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:1.5rem;box-shadow:0 6px 16px rgba(11,42,91,.35);border:3px solid var(--card)}
+.tab.tools-tab.active .ic{box-shadow:0 0 0 3px var(--gold),0 6px 16px rgba(11,42,91,.35)}
+
+/* ---------- LAYOUT ---------- */
+main{max-width:1100px;margin:0 auto;padding:16px}
+.view{display:none;animation:fade .2s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 10px}
+.section-title h2{font-size:1.05rem;font-weight:800}
+.link{color:var(--blue);font-weight:700;font-size:.88rem}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;border:1px solid var(--line)}
+
+/* HERO */
+.hero{background:var(--grad);color:#fff;border-radius:24px;padding:22px 20px;position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(11,42,91,.28)}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.12)}
+.hero h2{font-size:1.55rem;font-weight:900;line-height:1.15;position:relative;text-shadow:0 1px 3px rgba(0,0,0,.25)}
+.hero p{margin:8px 0 16px;opacity:.95;font-size:.95rem;position:relative;max-width:520px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:14px;font-weight:800;font-size:.95rem;transition:transform .08s}
+.btn:active{transform:scale(.97)}
+.btn-white{background:#fff;color:var(--navy);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.btn-grad{background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(11,42,91,.25)}
+.btn-ghost{background:var(--grad-soft);color:var(--text);border:1.5px solid var(--line)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-block{width:100%}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1}
+
+/* Domain tiles */
+.domains{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.domain{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;text-align:left;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.domain::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--grad)}
+.domain .em{font-size:1.6rem}
+.domain b{display:block;margin-top:6px;font-size:.95rem}
+.domain small{color:var(--muted);font-size:.78rem}
+
+/* Tools grid */
+.searchbar{position:relative}
+.searchbar input{padding-left:40px;border-radius:14px;background:var(--card)}
+.searchbar span{position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.6}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;padding:8px 14px;border-radius:999px;background:var(--card);border:1.5px solid var(--line);font-weight:700;font-size:.82rem;color:var(--muted)}
+.chip.active{background:var(--grad);color:#fff;border-color:transparent}
+.cat-title{margin:20px 2px 10px;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:8px}
+.cat-title::after{content:"";flex:1;height:2px;background:var(--grad);opacity:.35;border-radius:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px}
+.tool{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 12px 12px;text-align:left;box-shadow:var(--shadow);position:relative;display:flex;flex-direction:column;gap:6px;min-height:118px}
+.tool .ti{width:42px;height:42px;border-radius:12px;background:var(--grad-soft);display:grid;place-items:center;font-size:1.4rem}
+.tool b{font-size:.92rem;line-height:1.2}
+.tool small{color:var(--muted);font-size:.74rem;line-height:1.3}
+.tool .star{position:absolute;top:8px;right:8px;font-size:1.15rem;opacity:.35;padding:4px}
+.tool .star.on{opacity:1;color:var(--gold)}
+.tool.soon{opacity:.55}
+.badge{position:absolute;top:12px;right:38px;font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:99px;background:var(--line);color:var(--muted);text-transform:uppercase}
+.empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:.9rem}
+
+/* ---------- TOOL SCREEN ---------- */
+.screen{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;flex-direction:column}
+.screen.open{display:flex;animation:slide .22s ease}
+@keyframes slide{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+.screen header{background:var(--grad);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 12px 12px;display:flex;align-items:center;gap:10px}
+.screen header h2{font-size:1.1rem;font-weight:800;flex:1;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.screen .body{flex:1;overflow:auto;padding:16px;max-width:900px;width:100%;margin:0 auto;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+
+/* Big displays */
+.big{font-variant-numeric:tabular-nums;font-weight:900;text-align:center;letter-spacing:-1px}
+.clock{font-size:clamp(3.2rem,16vw,7rem);background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding:10px 0}
+.laps{list-style:none;padding:0;margin:12px 0 0;max-height:40vh;overflow:auto}
+.laps li{display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.mc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px}
+.mc{border-radius:16px;padding:12px;background:var(--card);border:2px solid var(--line);text-align:center}
+.mc.run{border-color:var(--blue)}
+.mc.done{border-color:var(--gold);background:var(--grad-soft)}
+.mc input{text-align:center;padding:6px;font-weight:700;border:none;background:transparent}
+.mc .t{font-size:1.6rem;font-weight:900;font-variant-numeric:tabular-nums;margin:4px 0 8px}
+.phase{font-size:1.4rem;font-weight:900;text-align:center;text-transform:uppercase;letter-spacing:2px;padding:10px;border-radius:14px;color:#fff}
+.ph-work{background:linear-gradient(135deg,#F7C600,#E98A00)}
+.ph-rest{background:linear-gradient(135deg,#3C7BE0,#0B2A5B)}
+.ph-prep{background:#7A869F}
+.ph-end{background:var(--ok)}
+.pick{font-size:clamp(2rem,9vw,3.6rem);font-weight:900;text-align:center;padding:26px 10px;min-height:130px;display:grid;place-items:center}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:12px}
+.team h3{font-size:1rem;margin-bottom:6px;display:flex;justify-content:space-between}
+.team ul{margin:0;padding-left:18px;font-size:.92rem}
+.score-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.score{border-radius:20px;padding:12px;text-align:center;color:#fff}
+.score.a{background:linear-gradient(160deg,#F7C600,#D98E00)}
+.score.b{background:linear-gradient(160deg,#3C7BE0,#0B2A5B)}
+.score input{background:rgba(255,255,255,.2);color:#fff;border:none;text-align:center;font-weight:800}
+.score .pts{font-size:clamp(3.5rem,18vw,7rem);font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1}
+.score .row button{background:rgba(255,255,255,.22);color:#fff;padding:12px 0;border-radius:12px;font-weight:900;font-size:1.1rem}
+.result{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.result .card{text-align:center;padding:12px}
+.result .card b{display:block;font-size:1.4rem}
+.result .card small{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:10px}
+th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted);font-size:.78rem;text-transform:uppercase}
+.list-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-bottom:1px solid var(--line)}
+.muted{color:var(--muted);font-size:.85rem}
+.menu-list .list-item{cursor:pointer}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;z-index:99;display:none;box-shadow:var(--shadow)}
+@media (min-width:900px){
+  .hero{padding:34px 36px}.hero h2{font-size:2rem}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<div class="topbar">
+  <div class="logo">EPS</div>
+  <div>
+    <h1>EPS Tout en 1</h1>
+    <div class="sub">by Steff64</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="icon-btn" onclick="go('outils');focusSearch()" aria-label="Rechercher">🔍</button>
+</div>
+
+<main>
+  <!-- ============ ACCUEIL ============ -->
+  <section class="view active" id="view-accueil">
+    <div class="hero">
+      <h2>Tous vos outils EPS,<br>au même endroit.</h2>
+      <p>Chronos, timers, tirages au sort, équipes, table de marque, calculs VMA… Pensé pour la tablette et le téléphone, en plein cours.</p>
+      <button class="btn btn-white" onclick="go('outils')">🧰 Ouvrir les OUTILS</button>
+    </div>
+
+    <div class="section-title"><h2>⭐ Mes favoris</h2><button class="link" onclick="go('outils')">Gérer</button></div>
+    <div class="grid" id="fav-grid"></div>
+
+    <div class="section-title"><h2>🕘 Récemment utilisés</h2></div>
+    <div class="grid" id="recent-grid"></div>
+
+    <div class="section-title"><h2>Par domaine</h2></div>
+    <div class="domains" id="domains"></div>
+  </section>
+
+  <!-- ============ OUTILS ============ -->
+  <section class="view" id="view-outils">
+    <div class="searchbar"><span>🔍</span><input id="search" type="search" placeholder="Rechercher un outil (chrono, équipes, VMA…)"></div>
+    <div class="chips" id="chips"></div>
+    <div id="tools-list"></div>
+  </section>
+
+  <!-- ============ PLUS ============ -->
+  <section class="view" id="view-plus">
+    <div class="section-title"><h2>Données & sauvegarde</h2></div>
+    <div class="card menu-list" style="padding:0">
+      <div class="list-item" onclick="exportData()"><div><b>💾 Exporter mes données</b><div class="muted">Fichier JSON (classes, grilles, suivi, dispenses…)</div></div><span>›</span></div>
+      <div class="list-item" onclick="document.getElementById('imp').click()"><div><b>📥 Importer une sauvegarde</b><div class="muted">Restaurer depuis un fichier JSON</div></div><span>›</span></div>
+      <div class="list-item" onclick="resetAll()"><div><b style="color:var(--danger)">🗑 Tout effacer</b><div class="muted">Nouvelle année scolaire</div></div><span>›</span></div>
+    </div>
+    <input type="file" id="imp" accept="application/json" hidden onchange="importData(this)">
+    <div class="section-title"><h2>À propos</h2></div>
+    <div class="card">
+      <p style="margin:0 0 8px"><b>EPS Tout en 1</b> — version 0.3 · créé par <b>Steff64</b></p>
+      <p class="muted" style="margin:0">Les données restent sur cet appareil (stockage local du navigateur). Aucun compte, aucun serveur. Installable sur l'écran d'accueil : Safari → Partager → « Sur l'écran d'accueil ».</p>
+    </div>
+  </section>
+</main>
+
+<!-- ============ TAB BAR ============ -->
+<nav class="tabbar">
+  <button class="tab active" data-tab="accueil" onclick="go('accueil')"><span class="ic">🏠</span>Accueil</button>
+  <button class="tab tools-tab" data-tab="outils" onclick="go('outils')"><span class="ic">🧰</span>OUTILS</button>
+  <button class="tab" data-tab="plus" onclick="go('plus')"><span class="ic">⚙️</span>Plus</button>
+</nav>
+
+<!-- ============ ÉCRAN OUTIL ============ -->
+<div class="screen" id="screen">
+  <header>
+    <button class="icon-btn" onclick="closeTool()" aria-label="Retour">←</button>
+    <h2 id="screen-title">Outil</h2>
+    <button class="icon-btn" id="screen-star" onclick="toggleFav(currentTool);updateScreenStar()">☆</button>
+  </header>
+  <div class="body" id="screen-body"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   STOCKAGE LOCAL
+   ========================================================= */
+const KEY='mesOutilsEPS_v1';
+let DB={favs:['chronos12','chrono','hiit','equipes'],recent:[],classes:[]};
+try{const s=localStorage.getItem(KEY); if(s) DB=Object.assign(DB,JSON.parse(s));}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',1800)}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* =========================================================
+   CATALOGUE DES OUTILS
+   ready:true = fonctionnel ; sinon badge "Bientôt"
+   ========================================================= */
+const CATS=[
+  {id:'temps',  em:'⏱', name:'Chronos & timers',   desc:'Chronomètres, minuteurs, HIIT'},
+  {id:'classe', em:'👥', name:'Gestion de classe',  desc:'Classes, tirages, équipes'},
+  {id:'match',  em:'🏆', name:'Matchs & tournois',  desc:'Score, poules, tournois'},
+  {id:'course', em:'🏃', name:'Course & athlé',     desc:'VMA, allures, plots'},
+  {id:'muscu',  em:'🏋️', name:'Musculation',        desc:'1RM, charges, journal'},
+  {id:'eval',   em:'📋', name:'Évaluation & suivi', desc:'Grilles, suivi, bilans'},
+];
+const TOOLS=[
+  {id:'chronos12',cat:'temps', em:'🟢', name:'Chronos EPS (12 élèves)', desc:'Chrono central + 12 chronos numérotés', ready:true},
+  {id:'chrono',   cat:'temps', em:'⏱', name:'Chronomètre',        desc:'Chrono plein écran avec tours', ready:true},
+  {id:'multi',    cat:'temps', em:'🔢', name:'Multi-chrono',       desc:'Un chrono par élève / groupe',  ready:true},
+  {id:'hiit',     cat:'temps', em:'🔥', name:'Timer HIIT / Tabata',desc:'Travail / repos / séries + bips', ready:true},
+  {id:'minuteur', cat:'temps', em:'⏳', name:'Minuteur',           desc:'Compte à rebours avec alarme',  ready:true},
+  {id:'photo',    cat:'temps', em:'📸', name:'Photo-finish',       desc:'Arrivées au ralenti', ready:true},
+  {id:'video',    cat:'temps', em:'🎥', name:'Vidéo différée',     desc:'Retour vidéo en différé', ready:true},
+
+  {id:'classes',  cat:'classe',em:'🗂', name:'Mes classes',        desc:'Créer et gérer les listes', ready:true},
+  {id:'tirage',   cat:'classe',em:'🎲', name:'Tirage au sort',     desc:'Désigner un élève au hasard', ready:true},
+  {id:'equipes',  cat:'classe',em:'🧩', name:'Composition d\'équipes', desc:'Équipes aléatoires équilibrées', ready:true},
+  {id:'dispenses',cat:'classe',em:'🩺', name:'Dispenses',          desc:'Suivi des inaptitudes', ready:true},
+  {id:'oubli',    cat:'classe',em:'👟', name:'Oublis de tenue',    desc:'Compter les oublis', ready:true},
+
+  {id:'marque',   cat:'match', em:'🆚', name:'Table de marque',    desc:'Score 2 équipes + chrono', ready:true},
+  {id:'poule',    cat:'match', em:'🔁', name:'Championnat (poule)',desc:'Rencontres + classement', ready:true},
+  {id:'tournoi',  cat:'match', em:'🏅', name:'Tournoi à élimination',desc:'Tableau à élimination directe', ready:true},
+  {id:'pyramide', cat:'match', em:'🔺', name:'Pyramide des victoires',desc:'Montée / descente', ready:true},
+
+  {id:'vma',      cat:'course',em:'💨', name:'VMA & allures',      desc:'Temps de passage selon % VMA', ready:true},
+  {id:'vitesse',  cat:'course',em:'📏', name:'Vitesse de course',  desc:'Distance + temps → km/h', ready:true},
+  {id:'plots',    cat:'course',em:'🔶', name:'Écartement des plots',desc:'Placer les plots selon la VMA', ready:true},
+  {id:'relais',   cat:'course',em:'🔄', name:'Relais',             desc:'Gestion des relais', ready:true},
+
+  {id:'rm',       cat:'muscu', em:'💪', name:'Calcul 1RM',         desc:'Charge max + % de travail', ready:true},
+  {id:'journal',  cat:'muscu', em:'📓', name:'Journal de musculation',desc:'Carnet d\'entraînement élève', ready:true},
+
+  {id:'grilles',  cat:'eval',  em:'✅', name:'Grilles d\'évaluation',desc:'Critères et niveaux', ready:true},
+  {id:'suivi',    cat:'eval',  em:'📈', name:'Tableau de suivi',   desc:'Notes et observations', ready:true},
+  {id:'debrief',  cat:'eval',  em:'💬', name:'Questions débrief',  desc:'Questions de fin de séance', ready:true},
+];
+const T=id=>TOOLS.find(t=>t.id===id);
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+let currentCat='all';
+function go(tab){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+tab));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  if(tab==='accueil') renderHome();
+  if(tab==='outils') renderTools();
+  window.scrollTo({top:0});
+  history.replaceState(null,'','#'+tab);
+}
+function focusSearch(){setTimeout(()=>document.getElementById('search').focus(),50)}
+
+function toolCard(t){
+  const fav=DB.favs.includes(t.id);
+  return `<div class="tool ${t.ready?'':'soon'}" role="button" onclick="openTool('${t.id}')">
+    <button class="star ${fav?'on':''}" onclick="event.stopPropagation();toggleFav('${t.id}')" aria-label="Favori">${fav?'★':'☆'}</button>
+    ${t.ready?'':'<span class="badge">Bientôt</span>'}
+    <div class="ti">${t.em}</div><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></div>`;
+}
+function renderHome(){
+  const f=DB.favs.map(T).filter(Boolean);
+  document.getElementById('fav-grid').innerHTML=f.length?f.map(toolCard).join(''):'<div class="empty card" style="grid-column:1/-1">Touchez ☆ sur un outil pour l\'ajouter ici.</div>';
+  const r=DB.recent.map(T).filter(Boolean).slice(0,4);
+  document.getElementById('recent-grid').innerHTML=r.length?r.map(toolCard).join(''):'<div class="empty card" style="grid-column:1/-1">Aucun outil utilisé pour l\'instant.</div>';
+  document.getElementById('domains').innerHTML=CATS.map(c=>`<button class="domain" onclick="currentCat='${c.id}';go('outils')"><span class="em">${c.em}</span><b>${c.name}</b><small>${c.desc}</small></button>`).join('');
+}
+function renderTools(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  document.getElementById('chips').innerHTML=[{id:'all',em:'✨',name:'Tous'},{id:'fav',em:'⭐',name:'Favoris'},...CATS]
+    .map(c=>`<button class="chip ${currentCat===c.id?'active':''}" onclick="currentCat='${c.id}';renderTools()">${c.em} ${c.name}</button>`).join('');
+  let list=TOOLS.filter(t=>!q||(t.name+' '+t.desc).toLowerCase().includes(q));
+  if(currentCat==='fav') list=list.filter(t=>DB.favs.includes(t.id));
+  else if(currentCat!=='all') list=list.filter(t=>t.cat===currentCat);
+  let html='';
+  CATS.forEach(c=>{const l=list.filter(t=>t.cat===c.id); if(l.length) html+=`<div class="cat-title">${c.em} ${c.name}</div><div class="grid">${l.map(toolCard).join('')}</div>`;});
+  document.getElementById('tools-list').innerHTML=html||'<div class="empty">Aucun outil trouvé.</div>';
+}
+document.getElementById('search').addEventListener('input',renderTools);
+function toggleFav(id){
+  const i=DB.favs.indexOf(id); if(i>=0) DB.favs.splice(i,1); else DB.favs.push(id);
+  save(); renderHome(); renderTools();
+}
+
+/* =========================================================
+   ÉCRAN OUTIL
+   ========================================================= */
+let currentTool=null, cleanup=null;
+function openTool(id){
+  const t=T(id); currentTool=id;
+  DB.recent=[id,...DB.recent.filter(x=>x!==id)].slice(0,8); save();
+  document.getElementById('screen-title').textContent=t.em+'  '+t.name;
+  updateScreenStar();
+  const body=document.getElementById('screen-body'); body.className='body';
+  if(!t.ready){ body.innerHTML=`<div class="card empty"><div style="font-size:3rem">${t.em}</div><h3 style="margin:8px 0">${esc(t.name)}</h3><p>Cet outil arrive dans une prochaine version.</p></div>`; }
+  else { cleanup=TOOL_IMPL[id](body)||null; }
+  document.getElementById('screen').classList.add('open');
+  requestWake();
+}
+function closeTool(){ if(cleanup) cleanup(); cleanup=null; document.getElementById('screen').classList.remove('open'); releaseWake(); renderHome(); renderTools(); }
+function updateScreenStar(){document.getElementById('screen-star').textContent=DB.favs.includes(currentTool)?'★':'☆'}
+
+/* Écran toujours allumé pendant un outil */
+let wake=null;
+async function requestWake(){try{wake=await navigator.wakeLock?.request('screen')}catch(e){}}
+function releaseWake(){try{wake?.release();wake=null}catch(e){}}
+
+/* Sons */
+let actx=null;
+function beep(freq=880,dur=.15,vol=.4){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=freq;o.type='square';
+  g.gain.value=vol;o.connect(g);g.connect(actx.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+dur);o.stop(actx.currentTime+dur);}catch(e){}
+}
+const fmt=(ms,cs=true)=>{ms=Math.max(0,ms);const m=Math.floor(ms/60000),s=Math.floor(ms/1000)%60,c=Math.floor(ms/10)%100;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+(cs?','+String(c).padStart(2,'0'):'');};
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function classSelect(id){
+  return `<label>Classe</label><select id="${id}"><option value="">— Saisie libre —</option>${DB.classes.map((c,i)=>`<option value="${i}">${esc(c.name)} (${c.students.length})</option>`).join('')}</select>`;
+}
+function bindClassToTextarea(selId,taId){
+  const s=document.getElementById(selId),ta=document.getElementById(taId);
+  s.onchange=()=>{ if(s.value!=='') ta.value=DB.classes[s.value].students.join('\n'); };
+}
+const namesFrom=id=>document.getElementById(id).value.split(/\n|,/).map(s=>s.trim()).filter(Boolean);
+
+/* =========================================================
+   IMPLÉMENTATION DES OUTILS
+   ========================================================= */
+const TOOL_IMPL={
+
+/* ---------- Chronomètre ---------- */
+chrono(el){
+  let start=0,acc=0,run=false,laps=[],raf;
+  el.innerHTML=`<div class="card"><div class="big clock" id="c">00:00,00</div>
+    <div class="row"><button class="btn btn-grad" id="ss">▶ Démarrer</button><button class="btn btn-ghost" id="lap">🏁 Tour</button><button class="btn btn-ghost" id="rz">↺ Zéro</button></div>
+    <ul class="laps" id="laps"></ul></div>`;
+  const c=el.querySelector('#c'),ss=el.querySelector('#ss');
+  const now=()=>acc+(run?performance.now()-start:0);
+  const tick=()=>{c.textContent=fmt(now());raf=requestAnimationFrame(tick)};
+  const drawLaps=()=>el.querySelector('#laps').innerHTML=laps.map((l,i)=>`<li><span>Tour ${laps.length-i}</span><span>${fmt(l.split)}</span><b>${fmt(l.total)}</b></li>`).join('');
+  ss.onclick=()=>{ if(run){acc=now();run=false;ss.textContent='▶ Reprendre';} else {start=performance.now();run=true;ss.textContent='⏸ Pause';} };
+  el.querySelector('#lap').onclick=()=>{ if(!run) return; const t=now(),prev=laps[0]?.total||0; laps.unshift({total:t,split:t-prev}); beep(1200,.06); drawLaps(); };
+  el.querySelector('#rz').onclick=()=>{ run=false;acc=0;laps=[];ss.textContent='▶ Démarrer';drawLaps(); };
+  tick(); return ()=>cancelAnimationFrame(raf);
+},
+
+/* ---------- Multi-chrono ---------- */
+multi(el){
+  let chronos=[],raf,gStart=null;
+  el.innerHTML=`<div class="card">${classSelect('mcs')}
+    <div class="row" style="margin-top:10px"><input id="mcn" type="number" min="1" max="40" value="6" style="max-width:90px"><button class="btn btn-ghost" id="mcgen">Créer les chronos</button></div>
+    <div class="row" style="margin-top:10px"><button class="btn btn-grad" id="all">▶ Départ groupé</button><button class="btn btn-ghost" id="rst">↺ Tout remettre à zéro</button></div></div>
+    <div class="mc-grid" id="mcg"></div>`;
+  const g=el.querySelector('#mcg');
+  const build=names=>{chronos=names.map(n=>({name:n,start:null,end:null}));draw();};
+  const draw=()=>{g.innerHTML=chronos.map((c,i)=>`<div class="mc ${c.end?'done':c.start?'run':''}"><input value="${esc(c.name)}" data-i="${i}"><div class="t" data-t="${i}">00:00,00</div><button class="btn ${c.start&&!c.end?'btn-grad':'btn-ghost'} btn-block" data-b="${i}">${!c.start?'▶ Départ':!c.end?'⏹ Arrivée':'↺'}</button></div>`).join('');};
+  g.oninput=e=>{if(e.target.dataset.i!==undefined) chronos[e.target.dataset.i].name=e.target.value};
+  g.onclick=e=>{const i=e.target.dataset.b;if(i===undefined)return;const c=chronos[i];
+    if(!c.start){c.start=performance.now();} else if(!c.end){c.end=performance.now();beep(1000,.08);} else {c.start=null;c.end=null;} draw();};
+  el.querySelector('#mcgen').onclick=()=>{const s=el.querySelector('#mcs').value;
+    if(s!=='') build([...DB.classes[s].students]); else {const n=+el.querySelector('#mcn').value||6;build(Array.from({length:n},(_,i)=>'Élève '+(i+1)));}};
+  el.querySelector('#all').onclick=()=>{const t=performance.now();chronos.forEach(c=>{c.start=t;c.end=null});beep(1500,.25);draw();};
+  el.querySelector('#rst').onclick=()=>{chronos.forEach(c=>{c.start=null;c.end=null});draw();};
+  const tick=()=>{const t=performance.now();chronos.forEach((c,i)=>{const d=g.querySelector(`[data-t="${i}"]`);if(d)d.textContent=fmt(c.start?(c.end||t)-c.start:0)});raf=requestAnimationFrame(tick)};
+  build(Array.from({length:6},(_,i)=>'Élève '+(i+1))); tick();
+  return ()=>cancelAnimationFrame(raf);
+},
+
+/* ---------- Timer HIIT / Tabata ---------- */
+hiit(el){
+  let iv=null,state=null;
+  el.innerHTML=`<div class="card" id="cfg">
+    <div class="row"><div><label>Travail (s)</label><input id="w" type="number" value="20"></div><div><label>Repos (s)</label><input id="r" type="number" value="10"></div></div>
+    <div class="row"><div><label>Répétitions</label><input id="n" type="number" value="8"></div><div><label>Séries</label><input id="s" type="number" value="1"></div><div><label>Repos séries (s)</label><input id="rs" type="number" value="60"></div></div>
+    <div class="row" style="margin-top:10px"><button class="btn btn-ghost" data-p="20,10,8,1">Tabata</button><button class="btn btn-ghost" data-p="30,30,10,1">30/30</button><button class="btn btn-ghost" data-p="45,15,6,2">45/15</button></div></div>
+    <div class="card" style="margin-top:12px"><div class="phase ph-prep" id="ph">Prêt</div>
+    <div class="big clock" id="tm">00:00</div><div class="muted" style="text-align:center" id="info">—</div>
+    <div class="row" style="margin-top:12px"><button class="btn btn-grad" id="go">▶ Lancer</button><button class="btn btn-ghost" id="stop">⏹ Stop</button></div></div>`;
+  const $=s=>el.querySelector(s);
+  el.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const [w,r,n,s]=b.dataset.p.split(',');$('#w').value=w;$('#r').value=r;$('#n').value=n;$('#s').value=s;});
+  const plan=()=>{const w=+$('#w').value,r=+$('#r').value,n=+$('#n').value,s=+$('#s').value,rs=+$('#rs').value,p=[{k:'prep',d:5,l:'Préparez-vous'}];
+    for(let j=1;j<=s;j++){for(let i=1;i<=n;i++){p.push({k:'work',d:w,l:'Travail',info:`Rép. ${i}/${n} · Série ${j}/${s}`});if(i<n&&r>0)p.push({k:'rest',d:r,l:'Repos',info:`Prochaine : ${i+1}/${n}`});}
+    if(j<s&&rs>0)p.push({k:'rest',d:rs,l:'Repos série',info:`Série ${j+1}/${s} à suivre`});} return p;};
+  const show=()=>{const ph=state.p[state.i];$('#ph').className='phase ph-'+ph.k;$('#ph').textContent=ph.l;$('#info').textContent=ph.info||'';};
+  const step=()=>{state.left--; if(state.left<=3&&state.left>0) beep(660,.1);
+    if(state.left<=0){state.i++; if(state.i>=state.p.length){clearInterval(iv);iv=null;$('#ph').className='phase ph-end';$('#ph').textContent='Terminé 🎉';$('#tm').textContent='00:00';beep(1200,.6);return;}
+      state.left=state.p[state.i].d; beep(state.p[state.i].k==='work'?1200:500,.35); show();}
+    $('#tm').textContent=fmt(state.left*1000,false);};
+  $('#go').onclick=()=>{ if(iv){clearInterval(iv);iv=null;$('#go').textContent='▶ Reprendre';return;}
+    if(!state){state={p:plan(),i:0};state.left=state.p[0].d;show();$('#tm').textContent=fmt(state.left*1000,false);}
+    beep(800,.05); iv=setInterval(step,1000); $('#go').textContent='⏸ Pause'; };
+  $('#stop').onclick=()=>{clearInterval(iv);iv=null;state=null;$('#go').textContent='▶ Lancer';$('#ph').className='phase ph-prep';$('#ph').textContent='Prêt';$('#tm').textContent='00:00';$('#info').textContent='—';};
+  return ()=>clearInterval(iv);
+},
+
+/* ---------- Minuteur ---------- */
+minuteur(el){
+  let end=null,left=0,raf;
+  el.innerHTML=`<div class="card"><div class="row"><div><label>Minutes</label><input id="m" type="number" value="5" min="0"></div><div><label>Secondes</label><input id="s" type="number" value="0" min="0" max="59"></div></div>
+    <div class="row" style="margin-top:10px">${[1,2,3,5,10].map(m=>`<button class="btn btn-ghost" data-m="${m}">${m} min</button>`).join('')}</div>
+    <div class="big clock" id="tm">05:00</div>
+    <div class="row"><button class="btn btn-grad" id="go">▶ Démarrer</button><button class="btn btn-ghost" id="rz">↺ Réinitialiser</button></div></div>`;
+  const $=s=>el.querySelector(s);
+  const total=()=>((+$('#m').value||0)*60+(+$('#s').value||0))*1000;
+  const draw=ms=>$('#tm').textContent=fmt(Math.ceil(ms/1000)*1000,false);
+  el.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{$('#m').value=b.dataset.m;$('#s').value=0;draw(total());left=0;end=null;});
+  $('#m').oninput=$('#s').oninput=()=>{if(!end)draw(total())};
+  const tick=()=>{ if(end){const l=end-performance.now(); if(l<=0){end=null;left=0;draw(0);$('#go').textContent='▶ Démarrer';[0,300,600].forEach(d=>setTimeout(()=>beep(1000,.3),d));} else draw(l);} raf=requestAnimationFrame(tick);};
+  $('#go').onclick=()=>{ if(end){left=end-performance.now();end=null;$('#go').textContent='▶ Reprendre';} else {end=performance.now()+(left||total());$('#go').textContent='⏸ Pause';} };
+  $('#rz').onclick=()=>{end=null;left=0;draw(total());$('#go').textContent='▶ Démarrer';};
+  tick(); return ()=>cancelAnimationFrame(raf);
+},
+
+/* ---------- Mes classes ---------- */
+classes(el){
+  const draw=()=>{
+    el.innerHTML=`<div class="card"><h3>Nouvelle classe</h3><label>Nom</label><input id="cn" placeholder="ex : 6E1">
+      <label>Élèves (un par ligne, ou collés depuis un tableur)</label><textarea id="cl" placeholder="DUPONT Léa&#10;MARTIN Hugo"></textarea>
+      <button class="btn btn-grad btn-block" style="margin-top:10px" id="add">＋ Enregistrer la classe</button></div>
+      <div class="section-title"><h2>Mes classes (${DB.classes.length})</h2></div>
+      <div class="card" style="padding:0">${DB.classes.length?DB.classes.map((c,i)=>`<div class="list-item"><div><b>${esc(c.name)}</b><div class="muted">${c.students.length} élèves</div></div><div class="row" style="flex:0 0 auto"><button class="btn btn-ghost" data-e="${i}">✏️</button><button class="btn btn-ghost" data-d="${i}">🗑</button></div></div>`).join(''):'<div class="empty">Aucune classe enregistrée.</div>'}</div>`;
+    el.querySelector('#add').onclick=()=>{const name=el.querySelector('#cn').value.trim(),st=namesFrom('cl');
+      if(!name||!st.length) return toast('Nom et élèves requis');
+      const ex=DB.classes.findIndex(c=>c.name===name); if(ex>=0) DB.classes[ex].students=st; else DB.classes.push({name,students:st});
+      save();toast('Classe enregistrée ✔');draw();};
+    el.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{if(confirm('Supprimer cette classe ?')){DB.classes.splice(b.dataset.d,1);save();draw();}});
+    el.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{const c=DB.classes[b.dataset.e];el.querySelector('#cn').value=c.name;el.querySelector('#cl').value=c.students.join('\n');el.querySelector('#cn').scrollIntoView({behavior:'smooth'});});
+  }; draw();
+},
+
+/* ---------- Tirage au sort ---------- */
+tirage(el){
+  let pool=[],drawn=[];
+  el.innerHTML=`<div class="card">${classSelect('ts')}<label>Participants</label><textarea id="tl" placeholder="Un nom par ligne"></textarea>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="nr" checked style="width:auto"> Sans remise (chacun passe une fois)</label></div>
+    <div class="card" style="margin-top:12px"><div class="pick" id="pk">🎲</div>
+    <div class="row"><button class="btn btn-grad" id="go">🎲 Tirer au sort</button><button class="btn btn-ghost" id="rz">↺ Recommencer</button></div>
+    <p class="muted" id="hist" style="margin:12px 0 0"></p></div>`;
+  bindClassToTextarea('ts','tl');
+  const $=s=>el.querySelector(s);
+  $('#rz').onclick=()=>{drawn=[];$('#hist').textContent='';$('#pk').textContent='🎲';};
+  $('#go').onclick=()=>{let all=namesFrom('tl'); if(!all.length) return toast('Ajoutez des noms');
+    pool=$('#nr').checked?all.filter(n=>!drawn.includes(n)):all; if(!pool.length) return toast('Tout le monde est passé !');
+    let k=0;const spin=setInterval(()=>{$('#pk').textContent=pool[Math.floor(Math.random()*pool.length)];beep(400+k*30,.03,.15);
+      if(++k>18){clearInterval(spin);const w=pool[Math.floor(Math.random()*pool.length)];$('#pk').textContent=w;drawn.push(w);beep(1200,.3);
+        $('#hist').textContent='Déjà tirés : '+drawn.join(', ');}},70);};
+},
+
+/* ---------- Composition d'équipes ---------- */
+equipes(el){
+  el.innerHTML=`<div class="card">${classSelect('es')}<label>Élèves</label><textarea id="el" placeholder="Un nom par ligne"></textarea>
+    <div class="row"><div><label>Mode</label><select id="mode"><option value="n">Nombre d'équipes</option><option value="s">Élèves par équipe</option></select></div><div><label>Valeur</label><input id="v" type="number" value="4" min="1"></div></div>
+    <button class="btn btn-grad btn-block" style="margin-top:12px" id="go">🧩 Former les équipes</button></div>
+    <div class="teams" id="tr"></div>`;
+  bindClassToTextarea('es','el');
+  const cols=['#F2B705','#1E5BD8','#E9A800','#0B2A5B','#3C7BE0','#C98A00','#5B8DEF','#7A5C00'];
+  el.querySelector('#go').onclick=()=>{const names=shuffle(namesFrom('el')); if(!names.length) return toast('Ajoutez des élèves');
+    const v=Math.max(1,+el.querySelector('#v').value||1); const n=el.querySelector('#mode').value==='n'?Math.min(v,names.length):Math.ceil(names.length/v);
+    const teams=Array.from({length:n},()=>[]); names.forEach((x,i)=>teams[i%n].push(x));
+    el.querySelector('#tr').innerHTML=teams.map((t,i)=>`<div class="card team" style="border-top:5px solid ${cols[i%cols.length]}"><h3><span>Équipe ${i+1}</span><span class="muted">${t.length}</span></h3><ul>${t.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`).join('');
+    beep(1000,.1);};
+},
+
+/* ---------- Table de marque ---------- */
+marque(el){
+  let a=0,b=0,end=null,left=0,raf;
+  el.innerHTML=`<div class="score-wrap">
+    <div class="score a"><input id="na" value="Équipe A"><div class="pts" id="pa">0</div><div class="row"><button data-a="-1">−1</button><button data-a="1">+1</button><button data-a="2">+2</button><button data-a="3">+3</button></div></div>
+    <div class="score b"><input id="nb" value="Équipe B"><div class="pts" id="pb">0</div><div class="row"><button data-b="-1">−1</button><button data-b="1">+1</button><button data-b="2">+2</button><button data-b="3">+3</button></div></div></div>
+    <div class="card" style="margin-top:12px"><div class="row" style="align-items:center"><div><label>Durée (min)</label><input id="d" type="number" value="7"></div><div class="big" style="font-size:2.6rem" id="tm">07:00</div></div>
+    <div class="row" style="margin-top:10px"><button class="btn btn-grad" id="go">▶ Chrono</button><button class="btn btn-ghost" id="rz">↺ Nouveau match</button></div></div>`;
+  const $=s=>el.querySelector(s);
+  const draw=()=>{$('#pa').textContent=a;$('#pb').textContent=b;};
+  el.querySelectorAll('[data-a]').forEach(x=>x.onclick=()=>{a=Math.max(0,a+ +x.dataset.a);draw();});
+  el.querySelectorAll('[data-b]').forEach(x=>x.onclick=()=>{b=Math.max(0,b+ +x.dataset.b);draw();});
+  const total=()=>(+$('#d').value||0)*60000;
+  $('#d').oninput=()=>{if(!end){left=0;$('#tm').textContent=fmt(total(),false);}};
+  const tick=()=>{if(end){const l=end-performance.now();if(l<=0){end=null;left=0;$('#tm').textContent='00:00';$('#go').textContent='▶ Chrono';[0,400,800].forEach(d=>setTimeout(()=>beep(700,.4),d));}else $('#tm').textContent=fmt(Math.ceil(l/1000)*1000,false);}raf=requestAnimationFrame(tick);};
+  $('#go').onclick=()=>{if(end){left=end-performance.now();end=null;$('#go').textContent='▶ Reprendre';}else{end=performance.now()+(left||total());$('#go').textContent='⏸ Pause';}};
+  $('#rz').onclick=()=>{a=b=0;end=null;left=0;draw();$('#tm').textContent=fmt(total(),false);$('#go').textContent='▶ Chrono';};
+  tick(); return ()=>cancelAnimationFrame(raf);
+},
+
+/* ---------- Championnat (poule) ---------- */
+poule(el){
+  let teams=[],matches=[];
+  el.innerHTML=`<div class="card"><label>Équipes (une par ligne)</label><textarea id="pl" style="min-height:100px">Équipe 1\nÉquipe 2\nÉquipe 3\nÉquipe 4</textarea>
+    <div class="row"><div><label>Victoire</label><input id="pv" type="number" value="3"></div><div><label>Nul</label><input id="pn" type="number" value="2"></div><div><label>Défaite</label><input id="pd" type="number" value="1"></div></div>
+    <button class="btn btn-grad btn-block" style="margin-top:12px" id="gen">🔁 Générer les rencontres</button></div><div id="out"></div>`;
+  const $=s=>el.querySelector(s);
+  const gen=()=>{teams=namesFrom('pl');if(teams.length<2)return toast('Au moins 2 équipes');
+    const t=[...teams];if(t.length%2)t.push(null);const r=t.length-1;matches=[];
+    for(let k=0;k<r;k++){for(let i=0;i<t.length/2;i++){const x=t[i],y=t[t.length-1-i];if(x&&y)matches.push({round:k+1,a:x,b:y,sa:'',sb:''});}t.splice(1,0,t.pop());}
+    draw();};
+  const table=()=>{const V=+$('#pv').value,N=+$('#pn').value,D=+$('#pd').value;
+    const s=Object.fromEntries(teams.map(t=>[t,{t,j:0,g:0,n:0,p:0,bp:0,bc:0,pts:0}]));
+    matches.forEach(m=>{if(m.sa===''||m.sb==='')return;const A=s[m.a],B=s[m.b],x=+m.sa,y=+m.sb;A.j++;B.j++;A.bp+=x;A.bc+=y;B.bp+=y;B.bc+=x;
+      if(x>y){A.g++;B.p++;A.pts+=V;B.pts+=D}else if(x<y){B.g++;A.p++;B.pts+=V;A.pts+=D}else{A.n++;B.n++;A.pts+=N;B.pts+=N}});
+    return Object.values(s).sort((a,b)=>b.pts-a.pts||(b.bp-b.bc)-(a.bp-a.bc)||b.bp-a.bp);};
+  const draw=()=>{const rk=table();
+    $('#out').innerHTML=`<div class="section-title"><h2>Classement</h2></div><div class="card" style="overflow:auto"><table><tr><th>#</th><th>Équipe</th><th>Pts</th><th>J</th><th>G</th><th>N</th><th>P</th><th>Diff</th></tr>${rk.map((r,i)=>`<tr><td>${i+1}</td><td><b>${esc(r.t)}</b></td><td><b>${r.pts}</b></td><td>${r.j}</td><td>${r.g}</td><td>${r.n}</td><td>${r.p}</td><td>${r.bp-r.bc}</td></tr>`).join('')}</table></div>
+    <div class="section-title"><h2>Rencontres</h2></div><div class="card" style="padding:0">${matches.map((m,i)=>`<div class="list-item"><span class="muted" style="width:34px">T${m.round}</span><span style="flex:1;text-align:right">${esc(m.a)}</span><input data-m="${i}" data-k="sa" type="number" value="${m.sa}" style="width:58px;text-align:center"><input data-m="${i}" data-k="sb" type="number" value="${m.sb}" style="width:58px;text-align:center"><span style="flex:1">${esc(m.b)}</span></div>`).join('')}</div>`;
+    $('#out').querySelectorAll('[data-m]').forEach(inp=>inp.onchange=()=>{matches[inp.dataset.m][inp.dataset.k]=inp.value;draw();});};
+  $('#gen').onclick=gen;
+},
+
+/* ---------- VMA & allures ---------- */
+vma(el){
+  el.innerHTML=`<div class="card"><div class="row"><div><label>VMA (km/h)</label><input id="v" type="number" step="0.5" value="12"></div><div><label>% VMA</label><input id="p" type="number" value="100"></div></div>
+    <div class="result" id="res"></div>
+    <div class="section-title"><h2>Temps de passage</h2></div><div style="overflow:auto"><table id="tb"></table></div></div>`;
+  const $=s=>el.querySelector(s);
+  const upd=()=>{const v=+$('#v').value*(+$('#p').value/100); if(!v) return; const ms=v/3.6;
+    $('#res').innerHTML=`<div class="card"><b>${v.toFixed(1)}</b><small>km/h</small></div><div class="card"><b>${ms.toFixed(2)}</b><small>m/s</small></div><div class="card"><b>${fmt(1000/ms*1000,false)}</b><small>allure / km</small></div>`;
+    const d=[50,100,200,250,300,400,500,800,1000,1500,2000,3000];
+    $('#tb').innerHTML='<tr><th>Distance</th>'+[70,80,90,100,110].map(p=>`<th>${p}%</th>`).join('')+'</tr>'+d.map(x=>`<tr><td><b>${x} m</b></td>${[70,80,90,100,110].map(p=>`<td>${fmt(x/((+$('#v').value*p/100)/3.6)*1000,false)}</td>`).join('')}</tr>`).join('');};
+  $('#v').oninput=$('#p').oninput=upd; upd();
+},
+
+/* ---------- Vitesse de course ---------- */
+vitesse(el){
+  el.innerHTML=`<div class="card"><div class="row"><div><label>Distance (m)</label><input id="d" type="number" value="400"></div><div><label>Min</label><input id="m" type="number" value="1"></div><div><label>Sec</label><input id="s" type="number" step="0.1" value="30"></div></div>
+    <div class="row"><div><label>VMA de l'élève (optionnel)</label><input id="v" type="number" step="0.5" placeholder="km/h"></div></div><div class="result" id="res"></div></div>`;
+  const $=s=>el.querySelector(s);
+  const upd=()=>{const d=+$('#d').value,t=(+$('#m').value||0)*60+(+$('#s').value||0);if(!d||!t)return;const kmh=d/t*3.6,v=+$('#v').value;
+    $('#res').innerHTML=`<div class="card"><b>${kmh.toFixed(2)}</b><small>km/h</small></div><div class="card"><b>${(d/t).toFixed(2)}</b><small>m/s</small></div><div class="card"><b>${fmt(t/d*1000*1000,false)}</b><small>allure / km</small></div>${v?`<div class="card"><b>${Math.round(kmh/v*100)} %</b><small>de la VMA</small></div>`:''}`;};
+  el.querySelectorAll('input').forEach(i=>i.oninput=upd); upd();
+},
+
+/* ---------- Écartement des plots ---------- */
+plots(el){
+  el.innerHTML=`<div class="card"><div class="row"><div><label>VMA (km/h)</label><input id="v" type="number" step="0.5" value="12"></div><div><label>% VMA</label><input id="p" type="number" value="90"></div><div><label>Signal toutes les (s)</label><input id="s" type="number" value="15"></div></div>
+    <div class="result" id="res"></div><p class="muted">Distance entre deux plots pour que l'élève passe un plot à chaque signal.</p>
+    <div style="overflow:auto"><table id="tb"></table></div></div>`;
+  const $=s=>el.querySelector(s);
+  const upd=()=>{const v=+$('#v').value,p=+$('#p').value,s=+$('#s').value;if(!v||!s)return;const d=v*p/100/3.6*s;
+    $('#res').innerHTML=`<div class="card"><b>${d.toFixed(1)} m</b><small>entre 2 plots</small></div><div class="card"><b>${(v*p/100).toFixed(1)}</b><small>km/h</small></div>`;
+    $('#tb').innerHTML='<tr><th>VMA</th>'+[70,80,90,100,110].map(x=>`<th>${x}%</th>`).join('')+'</tr>'+[8,9,10,11,12,13,14,15,16,17,18].map(vv=>`<tr><td><b>${vv}</b></td>${[70,80,90,100,110].map(x=>`<td>${(vv*x/100/3.6*s).toFixed(1)} m</td>`).join('')}</tr>`).join('');};
+  el.querySelectorAll('input').forEach(i=>i.oninput=upd); upd();
+},
+
+/* ---------- Calcul 1RM ---------- */
+rm(el){
+  el.innerHTML=`<div class="card"><div class="row"><div><label>Charge soulevée (kg)</label><input id="c" type="number" value="40"></div><div><label>Répétitions</label><input id="r" type="number" value="8" min="1" max="15"></div></div>
+    <div class="result" id="res"></div><div class="section-title"><h2>Charges de travail</h2></div><div style="overflow:auto"><table id="tb"></table></div></div>`;
+  const $=s=>el.querySelector(s);
+  const obj={50:'Échauffement',60:'Endurance de force',70:'Tonification',80:'Volume / hypertrophie',90:'Force',100:'Charge maximale'};
+  const upd=()=>{const c=+$('#c').value,r=+$('#r').value;if(!c||!r)return;
+    const br=r===1?c:c*36/(37-r),ep=r===1?c:c*(1+r/30),m=(br+ep)/2;
+    $('#res').innerHTML=`<div class="card"><b>${m.toFixed(1)} kg</b><small>1RM estimée</small></div><div class="card"><b>${br.toFixed(1)}</b><small>Brzycki</small></div><div class="card"><b>${ep.toFixed(1)}</b><small>Epley</small></div>`;
+    $('#tb').innerHTML='<tr><th>%</th><th>Charge</th><th>Objectif</th></tr>'+[50,60,70,80,90,100].map(p=>`<tr><td><b>${p}%</b></td><td>${(Math.round(m*p/100*2)/2).toFixed(1)} kg</td><td class="muted">${obj[p]}</td></tr>`).join('');};
+  el.querySelectorAll('input').forEach(i=>i.oninput=upd); upd();
+},
+};
+
+/* =========================================================
+   SAUVEGARDE
+   ========================================================= */
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eps-tout-en-1-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  toast('Sauvegarde exportée ✔');
+}
+function importData(inp){
+  const f=inp.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);DB=Object.assign({favs:[],recent:[],classes:[],dispenses:[],oublis:{},journal:[],grilles:[],suivi:{},debrief:[]},d);save();renderHome();toast('Données restaurées ✔');}catch(e){toast('Fichier invalide');}inp.value='';};
+  r.readAsText(f);
+}
+function resetAll(){ if(confirm('Effacer toutes les données (classes, favoris…) ?')){DB={favs:[],recent:[],classes:[],dispenses:[],oublis:{},journal:[],grilles:[],suivi:{},debrief:[]};save();renderHome();toast('Données effacées');} }
+
+/* Démarrage */
+renderHome();
+const h=location.hash.slice(1); if(['outils','plus'].includes(h)) go(h);
+if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+<script src="js/outils-plus.js"></script>
+</body>
+</html>

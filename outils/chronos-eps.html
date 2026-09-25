@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Chronos EPS</title>
+<meta name="theme-color" content="#0E1B2E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chronos EPS">
+<style>
+  :root {
+    --floor: #0E1B2E; --card: #172A45; --idle: #132338; --line: #29466E;
+    --text: #F1F5F9; --dim: #7C93B3;
+    --go: #22C55E; --pause: #F59E0B; --lap: #3B82F6; --reset: #475569; --danger: #DC2626;
+    --g: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: var(--floor); color: var(--text); overflow: hidden; }
+  body {
+    font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    padding: max(var(--g), env(safe-area-inset-top)) max(var(--g), env(safe-area-inset-right))
+             max(var(--g), env(safe-area-inset-bottom)) max(var(--g), env(safe-area-inset-left));
+  }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* Paysage : 4 en haut, 2 à droite, 4 en bas, 2 à gauche (sens horaire) */
+  #grid {
+    height: 100%; display: grid; gap: var(--g);
+    grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr);
+    grid-template-areas:
+      "c1  c2 c3 c4"
+      "c12 m  m  c5"
+      "c11 m  m  c6"
+      "c10 c9 c8 c7";
+  }
+  /* Portrait : central en haut, 12 chronos en dessous */
+  @media (orientation: portrait) {
+    #grid {
+      grid-template-rows: repeat(5, 1fr);
+      grid-template-areas:
+        "m m m m" "m m m m"
+        "c1 c2 c3 c4" "c5 c6 c7 c8" "c9 c10 c11 c12";
+    }
+  }
+
+  .card {
+    container-type: size; min-width: 0; min-height: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    border-radius: 10px; padding: 5px; background: var(--idle);
+    border: 1px solid var(--line);
+  }
+  .card[data-st="run"]   { background: var(--card); border: 3px solid var(--bib); }
+  .card[data-st="pause"] { background: var(--card); border: 3px solid var(--pause); }
+
+  .head { display: flex; align-items: center; gap: 2cqw; font-size: min(9cqh, 6.5cqw); text-align: left; }
+  .badge {
+    flex: none; width: 2.2em; height: 2.2em; border-radius: 50%; background: var(--bib);
+    display: grid; place-items: center; color: #0B1220; font-weight: 900; font-size: 1.15em;
+  }
+  .name { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .laps { color: var(--dim); font-weight: 700; }
+
+  .time { text-align: center; font-weight: 800; font-size: min(23cqh, 15cqw); line-height: 1; color: var(--dim); }
+  .card[data-st="run"] .time { color: var(--text); }
+  .card[data-st="pause"] .time { color: var(--pause); }
+  .sub { text-align: center; color: var(--dim); font-size: min(8.5cqh, 6cqw); white-space: nowrap; overflow: hidden; }
+
+  .btns { display: flex; gap: 5px; height: 26cqh; }
+  .btns button {
+    position: relative; overflow: hidden; flex: 1; border-radius: 8px;
+    font-weight: 800; font-size: min(10cqh, 6.5cqw); color: #fff;
+  }
+  .btns button:active { opacity: .6; }
+  .btns button:disabled { opacity: .3; }
+  .lap { background: var(--lap); }
+  .go  { background: var(--go); flex: 1.6 !important; }
+  .go.is-pause { background: var(--pause); }
+  .rst { background: var(--reset); flex: .7 !important; font-size: min(13cqh, 8cqw) !important; }
+  /* Appui long pour remettre à zéro : jauge de remplissage */
+  .rst::after {
+    content: ""; position: absolute; inset: 0; background: rgba(255,255,255,.35);
+    transform: scaleX(0); transform-origin: left;
+  }
+  .rst.holding::after { transform: scaleX(1); transition: transform .6s linear; }
+
+  /* Chrono central */
+  .master { grid-area: m; background: #0A1628; border-radius: 14px; border: 3px solid var(--line); padding: 10px; }
+  .master[data-st="run"] { border-color: var(--go); background: #0A1628; }
+  .master[data-st="pause"] { border-color: var(--pause); background: #0A1628; }
+  .master .head { justify-content: center; font-size: min(5.5cqh, 3cqw); color: var(--dim); font-weight: 700; }
+  .master .time { font-size: min(24cqh, 14cqw); }
+  .master .sub { font-size: min(5.5cqh, 3cqw); }
+  .master .btns { height: 13cqh; }
+  .master .btns button { font-size: min(6.5cqh, 3.8cqw); }
+  .master .rst { font-size: min(8cqh, 4.5cqw) !important; }
+  .group { border-top: 1px solid var(--line); padding-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .group-label { color: var(--dim); font-weight: 600; font-size: min(4.8cqh, 2.7cqw); }
+  .group .btns { height: 11cqh; }
+  .group .btns button { font-size: min(5.2cqh, 3cqw); }
+  .b-all  { background: #15803D; flex: 1.4 !important; }
+  .b-stop { background: #B45309; }
+  .b-raz  { background: var(--danger); }
+  .b-exp  { background: #334155; }
+
+  /* Fiche détaillée */
+  #modal { position: fixed; inset: 0; background: rgba(3,8,18,.75); display: none; place-items: center; padding: 20px; z-index: 10; }
+  #modal.open { display: grid; }
+  .sheet {
+    width: 100%; max-width: 720px; height: 92%; background: var(--card); border-radius: 16px;
+    padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .sheet-head { display: flex; align-items: center; gap: 12px; }
+  .sheet-head .badge { width: 44px; height: 44px; font-size: 22px; }
+  .sheet-title { flex: 1; font-size: 22px; font-weight: 800; }
+  #nameInput {
+    flex: 1; min-width: 0; background: none; border: 0; border-bottom: 2px solid var(--line);
+    color: var(--text); font: inherit; font-size: 20px; font-weight: 700; padding: 6px 0; outline: none;
+    -webkit-user-select: text; user-select: text;
+  }
+  #nameInput:focus { border-bottom-color: var(--lap); }
+  .close { background: var(--reset); border-radius: 8px; padding: 10px 14px; font-weight: 800; font-size: 16px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; }
+  .stat { flex: 1 1 110px; background: var(--floor); border-radius: 10px; padding: 10px; }
+  .stat small { display: block; color: var(--dim); font-size: 12px; font-weight: 600; }
+  .stat b { display: block; font-size: 18px; margin-top: 2px; }
+  #lapList { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .lap-row { display: flex; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 17px; font-weight: 600; }
+  .lap-row span { flex: 1; }
+  .lap-row span:first-child { flex: .6; }
+  .lap-row .cumul { color: var(--dim); }
+  .best { color: var(--go); } .worst { color: #F87171; }
+  .empty { color: var(--dim); text-align: center; margin-top: 20px; padding: 0 20px; font-size: 15px; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%);
+    background: #334155; padding: 10px 18px; border-radius: 10px; font-weight: 700;
+    opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 20;
+  }
+  #toast.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .rst.holding::after { transition: none; } }
+</style>
+</head>
+<body>
+<div id="grid"></div>
+
+<div id="modal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="badge" id="mBadge"></span>
+      <span class="sheet-title" id="mTitle"></span>
+      <input id="nameInput" maxlength="20" autocomplete="off" enterkeyhint="done">
+      <button class="close" id="mClose">Fermer</button>
+    </div>
+    <div class="stats num" id="mStats"></div>
+    <div id="lapList" class="num"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// Réglages
+// ─────────────────────────────────────────────────────────────
+const N = 12, MASTER = 0, KEY = 'chronos-eps-v1';
+const BIBS = ['#FFFFFF',
+  '#EF4444','#F97316','#FACC15','#84CC16','#22C55E','#14B8A6',
+  '#06B6D4','#3B82F6','#818CF8','#C084FC','#F472B6','#E2E8F0'];
+
+// ─────────────────────────────────────────────────────────────
+// Logique chrono (horloge système : aucune dérive, survit au rechargement)
+// ─────────────────────────────────────────────────────────────
+const mk = (id, name = '') => ({ id, name, running: false, startedAt: 0, accumulated: 0,
+  laps: [], pauses: 0, pauseStartedAt: null, pauseTotal: 0 });
+
+function load() {
+  try { const v = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(v) && v.length === N + 1) return v; } catch (e) {}
+  return null;
+}
+let S = load() || Array.from({ length: N + 1 }, (_, i) => mk(i));
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+const elapsed = (c, now) => c.accumulated + (c.running ? now - c.startedAt : 0);
+const pauseTotalOf = (c, now) => c.pauseTotal + (!c.running && c.pauseStartedAt ? now - c.pauseStartedAt : 0);
+const statusOf = (c, t) => c.running ? 'run' : t > 0 ? 'pause' : 'idle';
+
+function start(c, now) {
+  if (c.running) return;
+  if (c.pauseStartedAt) c.pauseTotal += now - c.pauseStartedAt;
+  c.pauseStartedAt = null; c.startedAt = now; c.running = true;
+}
+function pause(c, now) {
+  if (!c.running) return;
+  c.accumulated += now - c.startedAt; c.running = false; c.pauseStartedAt = now; c.pauses++;
+}
+function lap(c, now) {
+  const total = elapsed(c, now); if (total <= 0) return;
+  const prev = c.laps.length ? c.laps[c.laps.length - 1].total : 0;
+  if (total - prev < 50) return; // anti double-appui
+  c.laps.push({ total, split: total - prev });
+}
+function reset(c) { Object.assign(c, mk(c.id, c.name)); }
+
+const ACTIONS = {
+  toggle: (c, now) => c.running ? pause(c, now) : start(c, now),
+  lap, reset: (c) => reset(c),
+  startAll: (_, now) => S.forEach(c => start(c, now)), // départ groupé : 13 chronos au même instant
+  pauseAll: (_, now) => S.forEach(c => pause(c, now)),
+};
+function act(type, id) {
+  const now = Date.now();
+  ACTIONS[type](S[id], now);
+  save(); update(true);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Format
+// ─────────────────────────────────────────────────────────────
+const pad = n => String(n).padStart(2, '0');
+function fmt(ms) {
+  ms = Math.max(0, Math.floor(ms));
+  const h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60,
+        s = Math.floor(ms / 1000) % 60, cs = Math.floor(ms / 10) % 100;
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}.${pad(cs)}` : `${pad(m)}:${pad(s)}.${pad(cs)}`;
+}
+const labelOf = c => c.id === MASTER ? 'Chrono central' : (c.name || '').trim() || `Élève ${c.id}`;
+const esc = s => s.replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+
+// ─────────────────────────────────────────────────────────────
+// Construction de l'écran
+// ─────────────────────────────────────────────────────────────
+const grid = document.getElementById('grid');
+const btns = `
+  <div class="btns">
+    <button class="lap" data-act="lap">Tour</button>
+    <button class="go" data-act="toggle">Départ</button>
+    <button class="rst" data-act="reset" aria-label="Maintenir pour remettre à zéro">↺</button>
+  </div>`;
+
+let html = `
+  <div class="card master" data-id="0" data-st="idle">
+    <button class="head" data-open>Chrono central</button>
+    <div class="time num" data-open>00:00.00</div>
+    <div class="sub num"></div>
+    ${btns}
+    <div class="group">
+      <div class="group-label">Toute la classe</div>
+      <div class="btns">
+        <button class="b-all"  data-act="startAll">Départ groupé</button>
+        <button class="b-stop" data-act="pauseAll">Tout arrêter</button>
+        <button class="b-raz"  data-click="resetAll">Tout RAZ</button>
+        <button class="b-exp"  data-click="export">Exporter</button>
+      </div>
+    </div>
+  </div>`;
+for (let id = 1; id <= N; id++) {
+  html += `
+  <div class="card" data-id="${id}" data-st="idle" style="grid-area:c${id};--bib:${BIBS[id]}">
+    <button class="head" data-open><span class="badge">${id}</span><span class="name"></span><span class="laps"></span></button>
+    <div class="time num">00:00.00</div>
+    <div class="sub num"></div>
+    ${btns}
+  </div>`;
+}
+grid.innerHTML = html;
+
+// Références DOM mises en cache
+const V = S.map(c => {
+  const el = grid.querySelector(`[data-id="${c.id}"]`);
+  return { el, time: el.querySelector('.time'), sub: el.querySelector('.sub'),
+    name: el.querySelector('.name'), laps: el.querySelector('.laps'),
+    lap: el.querySelector('[data-act="lap"]'), go: el.querySelector('[data-act="toggle"]'),
+    rst: el.querySelector('[data-act="reset"]'), cache: {} };
+});
+const setText = (v, key, node, txt) => { if (node && v.cache[key] !== txt) { node.textContent = txt; v.cache[key] = txt; } };
+
+// ─────────────────────────────────────────────────────────────
+// Rafraîchissement de l'affichage
+// ─────────────────────────────────────────────────────────────
+let modalId = null, lastModal = 0;
+function update(force) {
+  const now = Date.now();
+  S.forEach((c, i) => {
+    const v = V[i], t = elapsed(c, now), st = statusOf(c, t);
+    if (v.el.dataset.st !== st) v.el.dataset.st = st;
+    setText(v, 'time', v.time, fmt(t));
+    const last = c.laps[c.laps.length - 1];
+    setText(v, 'sub', v.sub,
+      st === 'pause' ? `En pause depuis ${fmt(now - c.pauseStartedAt)}`
+      : last ? (c.id === MASTER ? `Tour ${c.laps.length} : ${fmt(last.split)}` : `Dernier tour ${fmt(last.split)}`)
+      : c.id === MASTER ? 'Touchez le temps pour voir le détail' : '\u00A0');
+    setText(v, 'name', v.name, labelOf(c));
+    setText(v, 'laps', v.laps, c.laps.length ? `${c.laps.length} t.` : '');
+    setText(v, 'go', v.go, c.running ? 'Pause' : t > 0 ? 'Reprendre' : 'Départ');
+    v.go.classList.toggle('is-pause', c.running);
+    v.lap.disabled = !c.running;
+    v.rst.disabled = t === 0;
+  });
+  if (modalId !== null && (force || now - lastModal > 200)) { renderModal(now); lastModal = now; }
+}
+(function loop() { update(false); requestAnimationFrame(loop); })();
+
+// ─────────────────────────────────────────────────────────────
+// Interactions
+// ─────────────────────────────────────────────────────────────
+let hold = null;
+function cancelHold() { if (hold) { clearTimeout(hold.timer); hold.btn.classList.remove('holding'); hold = null; } }
+
+grid.addEventListener('pointerdown', e => {
+  requestWakeLock();
+  const b = e.target.closest('[data-act]');
+  if (!b || b.disabled) return;
+  const id = +b.closest('[data-id]').dataset.id, type = b.dataset.act;
+  if (type === 'reset') { // appui long 0,6 s
+    cancelHold();
+    b.classList.add('holding');
+    hold = { btn: b, timer: setTimeout(() => { cancelHold(); act('reset', id); }, 600) };
+    return;
+  }
+  act(type, id); // déclenchement dès le contact du doigt
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => grid.addEventListener(ev, cancelHold, true));
+
+grid.addEventListener('click', e => {
+  const o = e.target.closest('[data-open]');
+  if (o) return openModal(+o.closest('[data-id]').dataset.id);
+  const c = e.target.closest('[data-click]');
+  if (!c) return;
+  if (c.dataset.click === 'resetAll') {
+    if (confirm('Tout remettre à zéro ?\nLes 13 chronos et tous les tours seront effacés. Les prénoms sont conservés.')) {
+      S.forEach(reset); save(); update(true);
+    }
+  } else if (c.dataset.click === 'export') exportResults();
+});
+
+// ─────────────────────────────────────────────────────────────
+// Fiche détaillée
+// ─────────────────────────────────────────────────────────────
+const modal = document.getElementById('modal'), nameInput = document.getElementById('nameInput');
+function openModal(id) {
+  modalId = id;
+  const c = S[id], m = id === MASTER;
+  const badge = document.getElementById('mBadge');
+  badge.style.display = m ? 'none' : 'grid';
+  badge.style.background = BIBS[id]; badge.textContent = id;
+  document.getElementById('mTitle').style.display = m ? 'block' : 'none';
+  document.getElementById('mTitle').textContent = 'Chrono central';
+  nameInput.style.display = m ? 'none' : 'block';
+  nameInput.value = c.name || '';
+  nameInput.placeholder = `Prénom de l'élève ${id}`;
+  modal.classList.add('open');
+  renderModal(Date.now());
+}
+function closeModal() { nameInput.blur(); modal.classList.remove('open'); modalId = null; }
+document.getElementById('mClose').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+nameInput.addEventListener('input', () => { S[modalId].name = nameInput.value; save(); });
+nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') nameInput.blur(); });
+
+function renderModal(now) {
+  const c = S[modalId], t = elapsed(c, now), splits = c.laps.map(l => l.split);
+  const best = splits.length ? Math.min(...splits) : null;
+  const worst = splits.length > 1 ? Math.max(...splits) : null;
+  const avg = splits.length ? splits.reduce((a, b) => a + b, 0) / splits.length : null;
+  const stat = (l, v) => `<div class="stat"><small>${l}</small><b>${v}</b></div>`;
+  document.getElementById('mStats').innerHTML =
+    stat('Temps total', fmt(t)) + stat('Tours', c.laps.length) +
+    stat('Meilleur tour', best != null ? fmt(best) : '–') +
+    stat('Moyenne', avg != null ? fmt(avg) : '–') +
+    stat('Pauses', `${c.pauses} · ${fmt(pauseTotalOf(c, now))}`);
+  const list = document.getElementById('lapList'), key = c.laps.length + ':' + best;
+  if (list.dataset.key === key + ':' + modalId) return; // la liste n'a pas changé
+  list.dataset.key = key + ':' + modalId;
+  list.innerHTML = c.laps.length
+    ? c.laps.map((l, i) => `<div class="lap-row"><span>Tour ${i + 1}</span>
+        <span class="${l.split === best ? 'best' : l.split === worst ? 'worst' : ''}">${fmt(l.split)}</span>
+        <span class="cumul">cumul ${fmt(l.total)}</span></div>`).reverse().join('')
+    : '<p class="empty">Aucun tour enregistré. Appuyez sur « Tour » pendant la course pour noter un temps intermédiaire.</p>';
+}
+
+// ─────────────────────────────────────────────────────────────
+// Export des résultats
+// ─────────────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+async function exportResults() {
+  const n = Date.now(), d = new Date();
+  let txt = `Chronos EPS – ${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR').slice(0, 5)}\n\n`;
+  S.forEach(c => {
+    const t = elapsed(c, n);
+    if (t === 0 && !c.laps.length) return;
+    txt += `${c.id === MASTER ? 'Chrono central' : `${c.id}. ${labelOf(c)}`} : ${fmt(t)}`;
+    if (c.laps.length) txt += ` (${c.laps.length} tours)`;
+    if (c.pauses) txt += ` – ${c.pauses} pause(s), ${fmt(pauseTotalOf(c, n))}`;
+    txt += '\n';
+    c.laps.forEach((l, i) => txt += `   Tour ${i + 1} : ${fmt(l.split)}   (cumul ${fmt(l.total)})\n`);
+  });
+  try {
+    if (navigator.share) return await navigator.share({ title: 'Chronos EPS', text: txt });
+    await navigator.clipboard.writeText(txt); toast('Résultats copiés');
+  } catch (e) {
+    if (e.name === 'AbortError') return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain' }));
+    a.download = `chronos-eps-${d.toISOString().slice(0, 10)}.txt`; a.click();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Écran toujours allumé + fonctionnement hors ligne
+// ─────────────────────────────────────────────────────────────
+let wakeLock = null;
+async function requestWakeLock() {
+  if (wakeLock || !('wakeLock' in navigator)) return;
+  try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); }
+  catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') requestWakeLock(); });
+
+// (service worker géré par l'app principale)
+</script>
+</body>
+</html>
