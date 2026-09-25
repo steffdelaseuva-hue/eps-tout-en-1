@@ -24,7 +24,9 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 
 TOOL_IMPL.parkour = function (el) {
   const D = DB.parkour;
-  let cls = DB.classes[0]?.name || '', si = 0, fam = 'Sauter', ex = '', niv = 1, maitrise = null, flu = null;
+  let cls = DB.classes[0]?.name || '', si = 0, fam = 'Sauter', ex = '', niv = 1, ratings = {};
+  D.list = D.list || [];
+  const rt = i => ratings[i] = ratings[i] || { niv: D.list[i].niv, m: null, flu: null };
   const exList = f => [...PK_EX[f], ...D.customEx.filter(c => c.fam === f).map(c => c.nom)];
   const tag = m => m == null ? '–' : `<span class="pk-tag" style="background:${PK_M[m][1]}">${PK_M[m][0]}</span>`;
   const draw = () => {
@@ -34,13 +36,20 @@ TOOL_IMPL.parkour = function (el) {
       <div class="card"><label style="margin-top:0">Cycle</label><div class="seg" id="cy"><button data-c="1" class="${D.cycle === 1 ? 'on' : ''}">Niveau 1<br><small style="font-weight:600;opacity:.85">6e</small></button><button data-c="2" class="${D.cycle === 2 ? 'on' : ''}">Niveau 2<br><small style="font-weight:600;opacity:.85">4e · + fluidité</small></button></div>
         ${DB.classes.length ? `<div class="row"><div><label>Classe</label><select id="cl">${DB.classes.map(c => `<option ${c.name === cls ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div></div>
         <div class="row" style="margin-top:8px;align-items:center"><button class="btn btn-ghost" style="flex:0 0 52px" id="pv">◀</button><select id="se">${st.map((n, k) => `<option value="${k}" ${k === si ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select><button class="btn btn-ghost" style="flex:0 0 52px" id="nx">▶</button></div>` : noClassMsg}</div>
-      ${DB.classes.length ? `<div class="card" style="margin-top:12px">
-        <label style="margin-top:0">1 · Famille de l'exercice</label><div class="tog" id="fa">${PK_FAM.map(f => `<button data-f="${f}" class="${f === fam ? 'on' : ''}">${f}</button>`).join('')}</div>
-        <label>2 · Exercice</label><div class="row"><select id="ex">${list.map(x => `<option ${x === ex ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select><button class="btn btn-ghost" style="flex:0 0 auto" id="addx">＋</button></div>
-        <label>3 · Niveau de l'exercice</label><div class="seg" id="nv">${[1, 2, 3, 4].map(n => `<button data-n="${n}" class="${n === niv ? 'on' : ''}">Niveau ${n}</button>`).join('')}</div>
-        <label>4 · Niveau de maîtrise</label><div class="pk-m" id="ma">${PK_M.map(([l, c], k) => `<button data-m="${k}" class="${maitrise === k ? 'on' : ''}" style="${maitrise === k ? 'background:' + c : ''}">${l}</button>`).join('')}</div>
-        ${D.cycle === 2 ? `<label>5 · Fluidité</label><div class="pk-m" id="fl">${PK_M.map(([l, c], k) => `<button data-fl="${k}" class="${flu === k ? 'on' : ''}" style="${flu === k ? 'background:' + c : ''}">${l}</button>`).join('')}</div>` : ''}
-        <button class="btn btn-grad btn-block" style="margin-top:14px" id="sv">💾 Enregistrer et passer à l'élève suivant</button></div>
+      ${DB.classes.length ? `<div class="card" style="margin-top:12px"><h3>Exercices de la séance (${D.list.length})</h3>
+        <p class="muted" style="margin:4px 0 0">Ajoutez autant d'exercices que vous voulez : chaque élève est évalué sur toute la liste.</p>
+        <label>Famille</label><div class="tog" id="fa">${PK_FAM.map(f => `<button data-f="${f}" class="${f === fam ? 'on' : ''}">${f}</button>`).join('')}</div>
+        <label>Exercice</label><div class="row"><select id="ex">${list.map(x => `<option ${x === ex ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select><button class="btn btn-ghost" style="flex:0 0 auto" id="addx" title="Exercice non répertorié">✎</button></div>
+        <label>Niveau de l'exercice</label><div class="seg" id="nv">${[1, 2, 3, 4].map(n => `<button data-n="${n}" class="${n === niv ? 'on' : ''}">Niveau ${n}</button>`).join('')}</div>
+        <button class="btn btn-grad btn-block" style="margin-top:12px" id="addl">＋ Ajouter cet exercice à la liste</button></div>
+      <div class="card" style="margin-top:12px"><h3>Évaluation de ${esc(st[si] || '')}</h3>
+        ${D.list.length ? D.list.map((x, i) => { const r = rt(i); return `<div style="padding:10px 0;border-bottom:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>${esc(x.ex)}</b> <span class="muted">· ${x.fam}</span></div><button class="btn btn-ghost" style="padding:4px 9px" data-rml="${i}" title="Retirer de la liste">✕</button></div>
+          <div class="nv" style="margin-top:6px">${[1, 2, 3, 4].map(n => `<button data-rn="${i}|${n}" class="${r.niv === n ? 'on' : ''}">N${n}</button>`).join('')}</div>
+          <div class="muted" style="font-size:.75rem;margin-top:6px">Maîtrise</div><div class="pk-m">${PK_M.map(([l, c], k) => `<button data-rm="${i}|${k}" class="${r.m === k ? 'on' : ''}" style="${r.m === k ? 'background:' + c : ''}">${l}</button>`).join('')}</div>
+          ${D.cycle === 2 ? `<div class="muted" style="font-size:.75rem;margin-top:6px">Fluidité</div><div class="pk-m">${PK_M.map(([l, c], k) => `<button data-rf="${i}|${k}" class="${r.flu === k ? 'on' : ''}" style="${r.flu === k ? 'background:' + c : ''}">${l}</button>`).join('')}</div>` : ''}</div>`; }).join('')
+          : '<div class="empty">Ajoutez d\'abord un ou plusieurs exercices à la liste.</div>'}
+        <button class="btn btn-grad btn-block" style="margin-top:14px" id="sv" ${D.list.length ? '' : 'disabled'}>💾 Enregistrer et passer à l'élève suivant</button></div>
       <div class="section-title"><h2>${esc(st[si] || '')}</h2></div>
       <div class="card" style="padding:0">${mine.length ? mine.map(e => `<div class="list-item"><div style="flex:1"><b>${esc(e.ex)}</b> <span class="muted">· ${e.fam} · niv. ${e.niv}</span><div style="margin-top:4px">${tag(e.m)}${e.cycle === 2 ? ` <span class="muted" style="font-size:.75rem">fluidité</span> ${tag(e.flu)}` : ''} <span class="muted" style="font-size:.75rem">${new Date(e.date).toLocaleDateString('fr-FR')}</span></div></div><button class="btn btn-ghost" data-x="${e.i}">✕</button></div>`).join('') : '<div class="empty">Aucune évaluation pour cet élève.</div>'}</div>
       <div class="section-title"><h2>Bilan de la classe</h2><button class="link" id="exp">Exporter CSV</button></div>
@@ -52,19 +61,25 @@ TOOL_IMPL.parkour = function (el) {
     all('[data-c]').forEach(b => b.onclick = () => { D.cycle = +b.dataset.c; save(); draw(); });
     if (!DB.classes.length) return;
     $('#cl').onchange = () => { cls = $('#cl').value; si = 0; draw(); };
-    $('#se').onchange = () => { si = +$('#se').value; draw(); };
-    $('#pv').onclick = () => { si = Math.max(0, si - 1); draw(); };
-    $('#nx').onclick = () => { si = Math.min(st.length - 1, si + 1); draw(); };
+    $('#se').onchange = () => { si = +$('#se').value; ratings = {}; draw(); };
+    $('#pv').onclick = () => { si = Math.max(0, si - 1); ratings = {}; draw(); };
+    $('#nx').onclick = () => { si = Math.min(st.length - 1, si + 1); ratings = {}; draw(); };
     all('[data-f]').forEach(b => b.onclick = () => { fam = b.dataset.f; ex = ''; draw(); });
     $('#ex').onchange = () => { ex = $('#ex').value; };
     $('#addx').onclick = () => { const n = (prompt(`Nouvel exercice (famille ${fam}) :`) || '').trim(); if (!n) return; if (!exList(fam).includes(n)) { D.customEx.push({ fam, nom: n }); save(); } ex = n; draw(); };
     all('[data-n]').forEach(b => b.onclick = () => { niv = +b.dataset.n; draw(); });
-    all('[data-m]').forEach(b => b.onclick = () => { maitrise = +b.dataset.m; draw(); });
-    all('[data-fl]').forEach(b => b.onclick = () => { flu = +b.dataset.fl; draw(); });
+    $('#addl').onclick = () => { const x = $('#ex').value; if (!x) return; D.list.push({ fam, ex: x, niv }); save(); toast('Exercice ajouté ✔'); draw(); };
+    all('[data-rml]').forEach(b => b.onclick = () => { const i = +b.dataset.rml; D.list.splice(i, 1); const nr = {}; Object.keys(ratings).forEach(k => { k = +k; if (k < i) nr[k] = ratings[k]; else if (k > i) nr[k - 1] = ratings[k]; }); ratings = nr; save(); draw(); });
+    all('[data-rn]').forEach(b => b.onclick = () => { const [i, n] = b.dataset.rn.split('|').map(Number); rt(i).niv = n; draw(); });
+    all('[data-rm]').forEach(b => b.onclick = () => { const [i, k] = b.dataset.rm.split('|').map(Number); const r = rt(i); r.m = r.m === k ? null : k; draw(); });
+    all('[data-rf]').forEach(b => b.onclick = () => { const [i, k] = b.dataset.rf.split('|').map(Number); const r = rt(i); r.flu = r.flu === k ? null : k; draw(); });
     $('#sv').onclick = () => {
-      if (!st[si]) return toast('Classe vide'); if (maitrise == null) return toast('Choisissez le niveau de maîtrise'); if (D.cycle === 2 && flu == null) return toast('Choisissez la fluidité');
-      D.evals.push({ date: Date.now(), classe: cls, eleve: st[si], cycle: D.cycle, fam, ex: $('#ex').value, niv, m: maitrise, flu: D.cycle === 2 ? flu : null });
-      save(); toast(`${st[si]} ✔`); maitrise = null; flu = null; if (si < st.length - 1) si++; draw();
+      if (!st[si]) return toast('Classe vide');
+      const done = D.list.map((x, i) => ({ x, r: rt(i) })).filter(o => o.r.m != null);
+      if (!done.length) return toast('Évaluez au moins un exercice');
+      if (D.cycle === 2 && done.some(o => o.r.flu == null)) return toast('Indiquez aussi la fluidité');
+      done.forEach(({ x, r }) => D.evals.push({ date: Date.now(), classe: cls, eleve: st[si], cycle: D.cycle, fam: x.fam, ex: x.ex, niv: r.niv, m: r.m, flu: D.cycle === 2 ? r.flu : null }));
+      save(); toast(`${st[si]} : ${done.length} exercice(s) ✔`); ratings = {}; if (si < st.length - 1) si++; draw();
     };
     all('[data-x]').forEach(b => b.onclick = () => { if (confirm('Supprimer cette évaluation ?')) { D.evals.splice(+b.dataset.x, 1); save(); draw(); } });
     $('#exp').onclick = () => { const rows = D.evals.filter(e => e.classe === cls); if (!rows.length) return toast('Rien à exporter');
