@@ -244,7 +244,7 @@ th{color:var(--muted);font-size:.78rem;text-transform:uppercase}
    STOCKAGE LOCAL
    ========================================================= */
 const KEY='mesOutilsEPS_v1';
-let DB={favs:['chronos12','chrono','hiit','equipes'],recent:[],classes:[]};
+let DB={favs:['chronos12','chrono','hiit','tirage'],recent:[],classes:[]};
 try{const s=localStorage.getItem(KEY); if(s) DB=Object.assign(DB,JSON.parse(s));}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',1800)}
@@ -260,7 +260,7 @@ const CATS=[
   {id:'duel',   name:'Activités de duel', desc:'Sports collectifs, raquettes, combats'},
   {id:'appn',   name:'APPN', desc:'Course d\'orientation, escalade · sauvetage à venir'},
   {id:'temps',  name:'Chronos & timers',   desc:'Outils transversaux'},
-  {id:'classe', name:'Gestion de classe',  desc:'Classes, tirages, équipes'},
+  {id:'classe', name:'Gestion de classe',  desc:'Classes, tirages, dispenses'},
   {id:'eval',   name:'Évaluation & suivi', desc:'Résultats, grilles, suivi'},
 ];
 const TOOLS=[
@@ -274,7 +274,6 @@ const TOOLS=[
   {id:'relais',   cat:'perf',name:'Relais',             desc:'Gestion des relais', ready:true},
   {id:'wod',      cat:'perf', name:'Crosstraining / HYROX', desc:'Blocs, exercices N1-N4, run, time cap', ready:true},
   {id:'rm',       cat:'perf', name:'Calcul 1RM',         desc:'Charge max + % de travail', ready:true},
-  {id:'journal',  cat:'perf', name:'Journal de musculation',desc:'Carnet d\'entraînement élève', ready:true},
 
   {id:'acrosport',cat:'art', name:'Acrosport', desc:'Banque de pyramides · duo, trio, quatuor · porteurs, hauteur, appuis', ready:true},
   {id:'parkour',  cat:'art', name:'Parkour', desc:'Sauter, franchir, tourner, freerun · maîtrise', ready:true},
@@ -298,7 +297,6 @@ const TOOLS=[
 
   {id:'classes',  cat:'classe',name:'Mes classes',        desc:'Créer et gérer les listes', ready:true},
   {id:'tirage',   cat:'classe',name:'Tirage au sort',     desc:'Désigner un élève au hasard', ready:true},
-  {id:'equipes',  cat:'classe',name:'Composition d\'équipes', desc:'Équipes aléatoires équilibrées', ready:true},
   {id:'dispenses',cat:'classe',name:'Dispenses',          desc:'Suivi des inaptitudes', ready:true},
   {id:'oubli',    cat:'classe',name:'Oublis de tenue',    desc:'Compter les oublis', ready:true},
 

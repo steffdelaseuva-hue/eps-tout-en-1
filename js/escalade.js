@@ -9,6 +9,7 @@
    ========================================================= */
 DB.escalade = DB.escalade || { voies: [], passages: [] };
 DB.escalade.defis = DB.escalade.defis || [];
+DB.escalade.equipes = DB.escalade.equipes || {};
 ICONS.escalade = '<path d="M5 21 8 3h11l-2 18z"/><circle cx="11" cy="7" r="1.1"/><circle cx="15" cy="10" r="1.1"/><circle cx="10.5" cy="13" r="1.1"/><circle cx="14" cy="17" r="1.1"/><path d="M12.5 9.5l1.5 3.5-2 2.5M14 13l-3 .5"/>';
 
 const ESC_COT = ['3a', '3b', '3c', '4a', '4b', '4c', '5a', '5a+', '5b', '5b+', '5c', '5c+', '6a', '6a+', '6b', '6b+', '6c'];
@@ -32,7 +33,7 @@ function escReadPhoto(file) {
 }
 
 TOOL_IMPL.escalade = function (el) {
-  const E = DB.escalade;
+  const E = DB.escalade = Object.assign({ voies: [], passages: [], defis: [], equipes: {} }, DB.escalade || {});
   let tab = E.voies.length ? 'passage' : 'voies', sub = null;
   // état de la saisie en cours
   const P = { cls: DB.lastClass || (DB.classes[0] || {}).name || '', si: 0, voie: E.lastVoie || '', mode: E.lastMode || 'moul', pieds: 0, pme: 0, flu: 0, t0: null, acc: 0, run: false };
@@ -44,10 +45,10 @@ TOOL_IMPL.escalade = function (el) {
 
   function frame() {
     if (sub) { try { sub(); } catch (e) {} sub = null; }
-    el.innerHTML = `<div class="co-tabs">${[['voies', '🧗 Voies'], ['passage', '📋 Passage'], ['defis', '⚔️ Défis'], ['video', '🎥 Vidéo'], ['resultats', '📊 Résultats']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div><div id="e-body"></div>`;
+    el.innerHTML = `<div class="co-tabs" style="flex-wrap:wrap">${[['voies', '🧗 Voies'], ['equipes', '👥 Équipes'], ['passage', '📋 Passage'], ['defis', '⚔️ Défis'], ['video', '🎥 Vidéo'], ['resultats', '📊 Résultats']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}" style="flex:1 1 30%">${l}</button>`).join('')}</div><div id="e-body"></div>`;
     el.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; frame(); });
     const box = el.querySelector('#e-body');
-    ({ voies, passage, defis, video, resultats })[tab](box);
+    ({ voies, equipes, passage, defis, video, resultats })[tab](box);
   }
 
   /* ---------- 1/ Voies ---------- */
@@ -92,17 +93,46 @@ TOOL_IMPL.escalade = function (el) {
     o.innerHTML = `<img src="${img}" style="max-width:100%;max-height:100%;object-fit:contain">`; o.onclick = () => o.remove(); document.body.appendChild(o);
   }
 
+  /* ---------- Équipes (cordées) ---------- */
+  const teamsOf = c => (E.equipes[c] = E.equipes[c] || []);
+  // membres actuels de l'équipe (les équipes restent modifiables pendant le défi)
+  const membD = (D, k) => (teamsOf(D.classe).find(t => t.name === D.eleves[k]) || {}).members || D.membres[k];
+  function equipes(box) {
+    if (!DB.classes.length) { box.innerHTML = noClassMsg; return; }
+    if (!DB.classes.some(c => c.name === P.cls)) P.cls = DB.classes[0].name;
+    const T = teamsOf(P.cls);
+    box.innerHTML = `<div class="card"><label style="margin-top:0">Classe</label><select id="ec">${DB.classes.map(c => `<option ${c.name === P.cls ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
+      <details class="card" style="margin-top:12px" ${T.length ? '' : 'open'}><summary style="font-weight:800;cursor:pointer">🧩 ${T.length ? 'Refaire les équipes' : 'Former les équipes'}</summary><div id="ecmp" style="margin-top:6px"></div></details>
+      <div class="section-title"><h2>Équipes de ${esc(P.cls)} (${T.length})</h2>${T.length ? '<button class="link" id="edel">Supprimer les équipes</button>' : ''}</div>
+      ${T.length ? `<div class="teams">${T.map(t => `<div class="card team"><h3><span>${esc(t.name)}</span><span class="muted">${t.members.length}</span></h3><ul>${t.members.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>`).join('')}</div>
+        <button class="btn btn-grad btn-block" style="margin-top:12px" id="eedit">✏️ Modifier les équipes (absent, blessé…)</button>
+        <p class="muted" style="font-size:.8rem;margin:8px 2px 0">Les équipes servent dans 📋 Passage (liste des élèves filtrée par équipe) et dans ⚔️ Défis (défi entre équipes).</p>`
+        : '<div class="card empty">Aucune équipe pour cette classe.</div>'}`;
+    const $ = s => box.querySelector(s);
+    $('#ec').onchange = e => { P.cls = e.target.value; DB.lastClass = P.cls; P.eq = ''; save(); equipes(box); };
+    mountComposer($('#ecmp'), { id: 'esq', modes: ['random', 'hetero', 'homo'], button: '👥 Former les équipes',
+      onTeams: teams => { if (T.length && !confirm('Remplacer les équipes existantes ?')) return;
+        E.equipes[P.cls] = teams.map(t => ({ name: t.name, members: t.members.map(m => m.n) })); P.eq = ''; save(); toast('Équipes formées ✔'); equipes(box); } });
+    const sel = box.querySelector('#esq-cls'); if (sel) { sel.value = P.cls; sel.dispatchEvent(new Event('change')); }
+    const k = box.querySelector('#esq-k'), v = box.querySelector('#esq-v'); if (k && v) { k.value = 's'; v.value = 3; }
+    if ($('#eedit')) $('#eedit').onclick = () => editGroupsPanel('Équipes d\'escalade', { cls: P.cls, list: () => teamsOf(P.cls), names: t => t.members,
+      take: (t, n) => { t.members.splice(t.members.indexOf(n), 1); }, put: (t, n) => t.members.push(n), make: name => ({ name: name.replace('Groupe', 'Équipe'), members: [] }), onChange: save, onClose: () => equipes(box) });
+    if ($('#edel')) $('#edel').onclick = () => { if (!confirm('Supprimer les équipes de la classe ?')) return; E.equipes[P.cls] = []; P.eq = ''; save(); equipes(box); };
+  }
+
   /* ---------- 2/ & 3/ Passage : mode + observables ---------- */
   function passage(box) {
     if (!DB.classes.length) { box.innerHTML = noClassMsg; return; }
     if (!E.voies.length) { box.innerHTML = '<div class="card empty">Créez d\'abord une voie dans l\'onglet <b>🧗 Voies</b>.</div>'; return; }
     if (!E.voies.some(w => w.id === P.voie)) P.voie = E.voies[0].id;
     if (!DB.classes.some(c => c.name === P.cls)) P.cls = DB.classes[0].name;
-    const st = studentsOf(P.cls); if (P.si >= st.length) P.si = 0;
+    const TM = teamsOf(P.cls); if (!TM.some(t => t.name === P.eq)) P.eq = '';
+    const st = P.eq ? TM.find(t => t.name === P.eq).members : studentsOf(P.cls); if (P.si >= st.length) P.si = 0;
     const V = E.voies.find(w => w.id === P.voie), img = DB[escImgKey(V.id)];
     const counter = (k, label) => `<label>${label}</label><div class="row" style="align-items:center"><button class="btn btn-ghost" style="flex:0 0 60px;font-size:1.3rem" data-m="${k}">−</button><div style="flex:0 0 70px;text-align:center;font-size:1.8rem;font-weight:900" id="n-${k}">${P[k]}</div><button class="btn btn-grad" style="flex:1;font-size:1.05rem;padding:14px" data-p="${k}">＋1</button></div>`;
     box.innerHTML = `<div class="card">
         <div class="row"><div><label>Classe</label><select id="cl">${DB.classes.map(c => `<option ${c.name === P.cls ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
+          ${TM.length ? `<div><label>Équipe</label><select id="eqf"><option value="">Toute la classe</option>${TM.map(t => `<option ${t.name === P.eq ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select></div>` : ''}
           <div><label>Élève</label><select id="st">${st.map((n, k) => `<option value="${k}" ${k === P.si ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div></div>
         <label>Voie</label><select id="vo">${E.voies.map(w => `<option value="${w.id}" ${w.id === P.voie ? 'selected' : ''}>${esc(w.cot)} — ${esc(w.nom)}</option>`).join('')}</select>
         ${img ? `<img src="${img}" id="vimg" style="width:100%;max-height:220px;object-fit:contain;border-radius:12px;background:#000;margin-top:8px;cursor:zoom-in">` : ''}
@@ -117,8 +147,9 @@ TOOL_IMPL.escalade = function (el) {
         <button class="btn btn-grad btn-block" style="margin-top:14px" id="sv">💾 Enregistrer pour ${esc(st[P.si] || '—')}</button></div>
       <div class="section-title"><h2>Derniers passages</h2></div><div class="card sheet-table" id="last"></div>`;
     const $ = s => box.querySelector(s), all = s => box.querySelectorAll(s);
-    $('#cl').onchange = e => { P.cls = e.target.value; DB.lastClass = P.cls; P.si = 0; save(); passage(box); };
+    $('#cl').onchange = e => { P.cls = e.target.value; DB.lastClass = P.cls; P.si = 0; P.eq = ''; save(); passage(box); };
     $('#st').onchange = e => { P.si = +e.target.value; passage(box); };
+    if ($('#eqf')) $('#eqf').onchange = e => { P.eq = e.target.value; P.si = 0; passage(box); };
     $('#vo').onchange = e => { P.voie = e.target.value; E.lastVoie = P.voie; save(); passage(box); };
     if ($('#vimg')) $('#vimg').onclick = () => zoom(V.id);
     all('[data-md]').forEach(b => b.onclick = () => { P.mode = b.dataset.md; E.lastMode = P.mode; save(); all('[data-md]').forEach(x => x.classList.toggle('on', x === b)); });
@@ -158,7 +189,7 @@ TOOL_IMPL.escalade = function (el) {
     const val = (r, c) => c === 'temps' ? escTime(r.temps) : r[c];
     return `<div class="card sheet-table"><table><tr><th>Voie</th>${cr.map(c => `<th colspan="2">${CRIT[c]}</th>`).join('')}<th colspan="2">Points</th></tr>
       <tr><th></th>${cr.map(() => `<th style="color:#B8912A">${esc(nm[0])}</th><th style="color:#1E5BD8">${esc(nm[1])}</th>`).join('')}<th style="color:#B8912A">${esc(nm[0])}</th><th style="color:#1E5BD8">${esc(nm[1])}</th></tr>
-      ${D.manches.map(m => { const p = manchePts(D, m); return `<tr><td>${escBadge(m.cot)} ${esc(m.voieNom)}</td>${cr.map(c => { const a = m.r[0][c] || 0, b = m.r[1][c] || 0; return `<td style="${a < b ? 'font-weight:900' : ''}">${val(m.r[0], c)}</td><td style="${b < a ? 'font-weight:900' : ''}">${val(m.r[1], c)}</td>`; }).join('')}<td><b>${p[0]}</b></td><td><b>${p[1]}</b></td></tr>`; }).join('')}
+      ${D.manches.map(m => { const p = manchePts(D, m); return `<tr><td>${escBadge(m.cot)} ${esc(m.voieNom)}${D.type === 'eq' ? `<div class="muted" style="font-size:.72rem">${esc(m.r[0].who || '?')} / ${esc(m.r[1].who || '?')}</div>` : ''}</td>${cr.map(c => { const a = m.r[0][c] || 0, b = m.r[1][c] || 0; return `<td style="${a < b ? 'font-weight:900' : ''}">${val(m.r[0], c)}</td><td style="${b < a ? 'font-weight:900' : ''}">${val(m.r[1], c)}</td>`; }).join('')}<td><b>${p[0]}</b></td><td><b>${p[1]}</b></td></tr>`; }).join('')}
       <tr style="border-top:2px solid var(--text)"><td><b>Cumul (${D.manches.length} voie${D.manches.length > 1 ? 's' : ''})</b></td>${cr.map(c => `<td><b>${val(T.t[0], c)}</b></td><td><b>${val(T.t[1], c)}</b></td>`).join('')}<td><b>${T.t[0].pts}</b></td><td><b>${T.t[1].pts}</b></td></tr></table>
       <p class="muted" style="font-size:.78rem;margin:6px 0 0">Sur chaque critère, le plus petit total l'emporte. Vainqueur du défi : le plus de critères gagnés sur le cumul.</p></div>`; };
   const duelWinner = D => { const T = duelTotals(D); if (!D.manches.length) return ''; return `<div class="win" style="margin-top:12px">${T.winner < 0 ? 'Égalité' : '🏆 ' + esc(D.eleves[T.winner])} · critères gagnés ${T.won[0]} – ${T.won[1]}</div>`; };
@@ -167,11 +198,14 @@ TOOL_IMPL.escalade = function (el) {
     if (!E.voies.length) { box.innerHTML = '<div class="card empty">Créez d\'abord une voie dans l\'onglet <b>🧗 Voies</b>.</div>'; return; }
     const D = E.defi;
     if (!D) {
-      const cls = DB.classes.some(c => c.name === P.cls) ? P.cls : DB.classes[0].name, st = studentsOf(cls), c = E.lastCrit || { pieds: true, pme: true, temps: true };
-      box.innerHTML = `<div class="card"><h3>Nouveau défi entre élèves</h3>
+      const cls = DB.classes.some(c => c.name === P.cls) ? P.cls : DB.classes[0].name, TM = teamsOf(cls), eqm = P.dmode === 'eq' && TM.length > 1, st = eqm ? TM.map(t => t.name) : studentsOf(cls), c = E.lastCrit || { pieds: true, pme: true, temps: true };
+      box.innerHTML = `<div class="card"><h3>Nouveau défi</h3>
           <label>Classe</label><select id="dc">${DB.classes.map(x => `<option ${x.name === cls ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
-          <div class="row"><div><label>Élève 1</label><select id="d0">${st.map((n, k) => `<option value="${k}">${esc(n)}</option>`).join('')}</select></div>
-            <div><label>Élève 2</label><select id="d1">${st.map((n, k) => `<option value="${k}" ${k === 1 ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div></div>
+          <label>Défi entre</label><div class="seg"><button data-dm2="el" class="${eqm ? '' : 'on'}">Élèves</button><button data-dm2="eq" class="${eqm ? 'on' : ''}">Équipes</button></div>
+          ${P.dmode === 'eq' && TM.length < 2 ? '<p class="muted" style="margin:6px 0 0;font-size:.82rem">Formez au moins 2 équipes dans l\'onglet 👥 Équipes.</p>' : ''}
+          <div class="row"><div><label>${eqm ? 'Équipe' : 'Élève'} 1</label><select id="d0">${st.map((n, k) => `<option value="${k}">${esc(n)}</option>`).join('')}</select></div>
+            <div><label>${eqm ? 'Équipe' : 'Élève'} 2</label><select id="d1">${st.map((n, k) => `<option value="${k}" ${k === 1 ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div></div>
+          ${eqm ? '<p class="muted" style="margin:6px 0 0;font-size:.8rem">À chaque voie, choisissez le grimpeur de chaque équipe ; les résultats se cumulent par équipe.</p>' : ''}
           <label>Critères du défi (le plus petit l'emporte)</label>
           ${Object.entries(CRIT).map(([k, l]) => `<label style="display:flex;gap:8px;align-items:center;margin:6px 0;color:var(--text);font-weight:600"><input type="checkbox" data-cr="${k}" ${c[k] ? 'checked' : ''} style="width:auto"> ${l}${k === 'temps' ? ' mis pour la voie' : ''}</label>`).join('')}
           <button class="btn btn-grad btn-block" style="margin-top:12px" id="dgo">⚔️ Lancer le défi</button></div>
@@ -179,9 +213,11 @@ TOOL_IMPL.escalade = function (el) {
         ${E.defis.slice().reverse().map(x => { const T = duelTotals(x); return `<details class="card" style="margin-top:8px"><summary style="cursor:pointer"><b>${esc(x.eleves[0])} vs ${esc(x.eleves[1])}</b> <span class="muted">· ${new Date(x.date).toLocaleDateString('fr-FR')} · ${x.manches.length} voie(s) · ${T.winner < 0 ? 'égalité' : '🏆 ' + esc(x.eleves[T.winner])}</span></summary>${duelTable(x)}<button class="btn btn-ghost" style="margin-top:8px" data-dx="${x.id}">🗑 Supprimer</button></details>`; }).join('') || '<div class="card empty">Aucun défi enregistré.</div>'}`;
       const $ = s => box.querySelector(s);
       $('#dc').onchange = e => { P.cls = e.target.value; defis(box); };
-      $('#dgo').onclick = () => { const a = +$('#d0').value, b = +$('#d1').value; if (a === b) return toast('Choisissez deux élèves différents');
+      box.querySelectorAll('[data-dm2]').forEach(b => b.onclick = () => { P.dmode = b.dataset.dm2; defis(box); });
+      $('#dgo').onclick = () => { const a = +$('#d0').value, b = +$('#d1').value; if (a === b) return toast(eqm ? 'Choisissez deux équipes différentes' : 'Choisissez deux élèves différents');
         const crit = {}; box.querySelectorAll('[data-cr]').forEach(x => crit[x.dataset.cr] = x.checked); if (!Object.values(crit).some(Boolean)) return toast('Choisissez au moins un critère');
-        E.lastCrit = crit; E.defi = { id: Date.now().toString(36), date: Date.now(), classe: cls, eleves: [st[a], st[b]], crit, manches: [], cur: { voie: E.lastVoie || E.voies[0].id, r: [{ pieds: 0, pme: 0 }, { pieds: 0, pme: 0 }] } };
+        E.lastCrit = crit; E.defi = { id: Date.now().toString(36), date: Date.now(), classe: cls, eleves: [st[a], st[b]], crit, manches: [], cur: { voie: E.lastVoie || E.voies[0].id, r: [{ pieds: 0, pme: 0 }, { pieds: 0, pme: 0 }], who: ['', ''] } };
+        if (eqm) { E.defi.type = 'eq'; E.defi.membres = [[...TM[a].members], [...TM[b].members]]; E.defi.cur.who = [TM[a].members[0] || '', TM[b].members[0] || '']; }
         DC.forEach(x => Object.assign(x, { t0: 0, acc: 0, run: false })); save(); defis(box); };
       box.querySelectorAll('[data-dx]').forEach(b => b.onclick = () => { if (!confirm('Supprimer ce défi ?')) return; const i = E.defis.findIndex(x => x.id === b.dataset.dx); E.defis.splice(i, 1); save(); defis(box); });
       if ($('#dexp')) $('#dexp').onclick = () => download(`defis-escalade-${new Date().toISOString().slice(0, 10)}.csv`, csv([['Date', 'Classe', 'Élève', 'Adversaire', 'Voie', 'Cotation', 'Poses de pieds', 'PME', 'Temps (s)', 'Points voie'],
@@ -193,6 +229,7 @@ TOOL_IMPL.escalade = function (el) {
     const V = E.voies.find(w => w.id === D.cur.voie), img = DB[escImgKey(V.id)], cr = D.crit;
     const col = k => `<div class="card" style="border-top:5px solid ${k ? '#1E5BD8' : '#B8912A'};padding:12px">
         <h3 style="margin:0 0 6px;color:${k ? '#1E5BD8' : '#B8912A'}">${esc(D.eleves[k])}</h3>
+        ${D.type === 'eq' ? `<label style="margin-top:0">Grimpeur</label><select data-who="${k}" style="padding:7px">${membD(D, k).map(n => `<option ${n === (D.cur.who || [])[k] ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>` : ''}
         ${cr.temps ? `<div class="big" id="dt${k}" style="font-size:clamp(1.8rem,8vw,2.8rem)">${escTime(dsec(k))}</div>
           <div class="row" style="gap:6px"><button class="btn btn-grad" style="padding:10px 6px" data-dg="${k}">${DC[k].run ? '⏹ Arrivée' : DC[k].acc ? '▶ Reprendre' : '▶ Départ'}</button><button class="btn btn-ghost" style="flex:0 0 44px;padding:10px 0" data-dr="${k}">↺</button></div>` : ''}
         ${['pieds', 'pme'].filter(c => cr[c]).map(c => `<label>${CRIT[c]}</label><div class="row" style="align-items:center;gap:6px"><button class="btn btn-ghost" style="flex:0 0 44px;padding:12px 0" data-dm="${k}|${c}">−</button><b style="flex:0 0 40px;text-align:center;font-size:1.5rem" id="dn${k}${c}">${D.cur.r[k][c]}</b><button class="btn btn-grad" style="padding:12px 4px" data-dp="${k}|${c}">＋1</button></div>`).join('')}</div>`;
@@ -204,6 +241,7 @@ TOOL_IMPL.escalade = function (el) {
       ${D.manches.length ? `<div class="section-title"><h2>Cumul de la séance</h2></div>${duelTable(D)}${duelWinner(D)}` : ''}
       <div class="row" style="margin-top:12px"><button class="btn btn-grad" id="dend">💾 Terminer et enregistrer le défi</button><button class="btn btn-ghost" id="dab">Abandonner</button></div>`;
     const $ = s => box.querySelector(s), all = s => box.querySelectorAll(s);
+    all('[data-who]').forEach(s2 => s2.onchange = () => { D.cur.who = D.cur.who || ['', '']; D.cur.who[+s2.dataset.who] = s2.value; save(); });
     $('#dv').onchange = e => { D.cur.voie = e.target.value; E.lastVoie = D.cur.voie; save(); defis(box); };
     if ($('#dimg')) $('#dimg').onclick = () => zoom(V.id);
     all('[data-dg]').forEach(b => b.onclick = () => { const k = +b.dataset.dg, c = DC[k]; if (c.run) { c.acc = dsec(k); c.run = false; beep(900, .2); } else { c.t0 = performance.now(); c.run = true; beep(1300, .3); } b.textContent = c.run ? '⏹ Arrivée' : '▶ Reprendre'; });
@@ -211,11 +249,12 @@ TOOL_IMPL.escalade = function (el) {
     all('[data-dp]').forEach(b => b.onclick = () => { const [k, c] = b.dataset.dp.split('|'); D.cur.r[k][c]++; $('#dn' + k + c).textContent = D.cur.r[k][c]; beep(1100, .03, .15); save(); });
     all('[data-dm]').forEach(b => b.onclick = () => { const [k, c] = b.dataset.dm.split('|'); D.cur.r[k][c] = Math.max(0, D.cur.r[k][c] - 1); $('#dn' + k + c).textContent = D.cur.r[k][c]; save(); });
     $('#dval').onclick = () => { if (cr.temps && DC.some(c => c.run)) return toast('Arrêtez d\'abord les chronos');
-      D.manches.push({ voie: V.id, voieNom: V.nom, cot: V.cot, r: [0, 1].map(k => ({ pieds: cr.pieds ? D.cur.r[k].pieds : 0, pme: cr.pme ? D.cur.r[k].pme : 0, temps: cr.temps ? Math.round(dsec(k) * 10) / 10 : 0 })) });
-      D.cur.r = [{ pieds: 0, pme: 0 }, { pieds: 0, pme: 0 }]; DC.forEach(x => Object.assign(x, { t0: 0, acc: 0, run: false })); save(); toast('Voie validée ✔'); defis(box); };
+      D.manches.push({ voie: V.id, voieNom: V.nom, cot: V.cot, r: [0, 1].map(k => ({ pieds: cr.pieds ? D.cur.r[k].pieds : 0, pme: cr.pme ? D.cur.r[k].pme : 0, temps: cr.temps ? Math.round(dsec(k) * 10) / 10 : 0, who: D.type === 'eq' ? (D.cur.who || [])[k] || '' : undefined })) });
+      D.cur.r = [{ pieds: 0, pme: 0 }, { pieds: 0, pme: 0 }];
+      if (D.type === 'eq') D.cur.who = [0, 1].map(k => { const m = membD(D, k), i = m.indexOf(D.cur.who[k]); return m[(i + 1) % m.length] || ''; }); DC.forEach(x => Object.assign(x, { t0: 0, acc: 0, run: false })); save(); toast('Voie validée ✔'); defis(box); };
     $('#dend').onclick = () => { if (!D.manches.length) return toast('Validez au moins une voie'); delete D.cur; E.defis.push(D); E.defi = null;
-      const T = duelTotals(D); [0, 1].forEach(k => saveResult({ tool: 'escalade', label: 'Défi escalade', classe: D.classe, eleve: D.eleves[k], valeur: `${T.winner < 0 ? 'égalité' : T.winner === k ? 'victoire' : 'défaite'} vs ${D.eleves[1 - k]}`,
-        detail: `${D.manches.length} voie(s) · ${D.crit.pieds ? T.t[k].pieds + ' poses de pieds · ' : ''}${D.crit.pme ? T.t[k].pme + ' PME · ' : ''}${D.crit.temps ? 'temps ' + escTime(T.t[k].temps) : ''}`.replace(/ · $/, '') }));
+      const T = duelTotals(D); [0, 1].forEach(k => (D.type === 'eq' ? [...new Set([...membD(D, k), ...D.manches.map(m => m.r[k].who).filter(Boolean)])] : [D.eleves[k]]).forEach(who => saveResult({ tool: 'escalade', label: D.type === 'eq' ? 'Défi escalade (équipe ' + D.eleves[k] + ')' : 'Défi escalade', classe: D.classe, eleve: who, valeur: `${T.winner < 0 ? 'égalité' : T.winner === k ? 'victoire' : 'défaite'} vs ${D.eleves[1 - k]}`,
+        detail: `${D.manches.length} voie(s) · ${D.crit.pieds ? T.t[k].pieds + ' poses de pieds · ' : ''}${D.crit.pme ? T.t[k].pme + ' PME · ' : ''}${D.crit.temps ? 'temps ' + escTime(T.t[k].temps) : ''}`.replace(/ · $/, '') })));
       save(); toast('Défi enregistré ✔'); defis(box); };
     $('#dab').onclick = () => { if (confirm('Abandonner ce défi ?')) { E.defi = null; save(); defis(box); } };
   }

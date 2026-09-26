@@ -2,9 +2,11 @@
    EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '4.8';
+const APP_VERSION = '5.0';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-one/';
 const CHANGELOG = [
+  { v: '5.0', items: ['Escalade : équipes (formation, modification), filtre par équipe dans Passage, défis entre équipes avec choix du grimpeur à chaque voie'] },
+  { v: '4.9', items: ['Outils retirés : Journal de musculation et Composition d’équipes (la composition reste intégrée aux outils qui forment des groupes)'] },
   { v: '4.8', items: ['Groupes et participants modifiables pendant la séance (absent, blessé…) : Duathlon, Course d’orientation, Crosstraining / HYROX, Combiné athlétique — les données de l’élève le suivent'] },
   { v: '4.7', items: ['Acrosport : groupes modifiables (déplacer, retirer un absent, ajouter, supprimer un groupe ou tous), vider un enchaînement', 'Gestion de match : zone « Non placés / absents » dans la composition des équipes'] },
   { v: '4.6', items: ['À propos : remerciements mis à jour'] },
@@ -202,7 +204,6 @@ function openNewYear(back) {
     ['suivi', true, `Tableaux de suivi (${counts.suivi})`],
     ['dispenses', true, `Dispenses (${counts.dispenses})`],
     ['oublis', true, `Oublis de tenue (${counts.oublis} classe·s)`],
-    ['journal', true, `Journal de musculation (${counts.journal} entrées)`],
     ['grilles', false, `Mes modèles de grilles d'évaluation (${DB.grilles.length})`],
     ['debrief', false, `Mes questions de débrief (${DB.debrief.length})`],
     ['favs', false, 'Favoris et outils récents'],
@@ -234,7 +235,7 @@ function openNewYear(back) {
       if (opt('suivi')) DB.suivi = {};
       if (opt('dispenses')) DB.dispenses = [];
       if (opt('oublis')) DB.oublis = {};
-      if (opt('journal')) DB.journal = [];
+
       if (opt('debrief')) DB.debrief = [];
       if (opt('favs')) { DB.favs = []; DB.recent = []; }
       DB.annee = ny; save(); renderHome(); renderPlusYear();
