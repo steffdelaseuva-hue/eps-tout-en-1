@@ -2,9 +2,10 @@
    EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '3.5';
+const APP_VERSION = '3.6';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-one/';
 const CHANGELOG = [
+  { v: '3.6', items: ['Connexion au compte : choix Combiner ou Remplacer les données de l’appareil'] },
   { v: '3.5', items: ['Chiffrement de bout en bout de la synchronisation (clé tirée du mot de passe)'] },
   { v: '3.4', items: ['Confidentialité : conseils reformulés'] },
   { v: '3.3', items: ['Choix du mode de stockage au premier lancement (local ou compte e-mail)', 'Indicateur du mode dans Plus', 'Suppression des données en ligne', 'Page Confidentialité & RGPD mise à jour'] },

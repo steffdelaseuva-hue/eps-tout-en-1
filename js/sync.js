@@ -14,7 +14,7 @@ let meta; try { meta = JSON.parse(localStorage.getItem(META_KEY)) || {}; } catch
 meta.keys = meta.keys || {}; meta.dev = meta.dev || Math.random().toString(36).slice(2, 10);
 const saveMeta = () => { try { localStorage.setItem(META_KEY, JSON.stringify(meta)); } catch (e) {} };
 
-const S = { ready: false, user: null, status: 'off', last: meta.last || null, err: '', needKey: false, mismatch: false };
+const S = { linkMode: 'merge', ready: false, user: null, status: 'off', last: meta.last || null, err: '', needKey: false, mismatch: false };
 window.EPSONE_SYNC = S;
 let fb = null, pushTimer = null, unsub = null, applying = false, CK = null;
 
@@ -95,6 +95,25 @@ function listen() {
   }, e => { S.status = 'error'; S.err = e.message; refreshUI(); });
 }
 
+/* Fusion « Combiner » : ajoute les données du compte sans effacer celles de l'appareil.
+   Listes : éléments rapprochés par id, sinon par nom (ex. classes), sans doublon.
+   Objets : fusion clé par clé ; en cas de conflit sur une valeur simple, l'appareil garde la sienne. */
+const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
+function mergeData(a, b) {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    const out = a.slice(), keyOf = x => isObj(x) ? (x.id != null ? 'id:' + x.id : x.name != null ? 'name:' + x.name : 'json:' + JSON.stringify(x)) : 'val:' + JSON.stringify(x);
+    const idx = new Map(out.map((x, i) => [keyOf(x), i]));
+    for (const x of b) { const k = keyOf(x);
+      if (!idx.has(k)) { idx.set(k, out.length); out.push(x); }
+      else if (isObj(x)) out[idx.get(k)] = mergeData(out[idx.get(k)], x); }
+    return out;
+  }
+  if (isObj(a) && isObj(b)) { const out = { ...a };
+    for (const k of Object.keys(b)) out[k] = (out[k] === undefined || out[k] === null) ? b[k] : mergeData(out[k], b[k]);
+    return out; }
+  return a;
+}
+
 /* Branchement d'un appareil sur le compte (clé disponible) */
 async function startSync() {
   S.needKey = false; S.mismatch = false;
@@ -104,9 +123,20 @@ async function startSync() {
   const snap = await getDocs(collection(fb.db, 'epsone', S.user.uid, 'data'));
   const remoteHasData = snap.docs.some(d => d.id !== CHECK_ID), localHasData = DB.classes?.length || DB.grilles?.length || Object.keys(meta.keys).length;
   if (remoteHasData && localHasData && !meta.linked) {
-    const keepRemote = confirm('Votre compte contient déjà des données.\n\nOK = récupérer les données du compte sur cet appareil (conseillé pour un 2e appareil)\nAnnuler = envoyer les données de cet appareil vers le compte');
-    if (!keepRemote) { meta.keys = {}; meta.linked = true; saveMeta(); if (ok === null) await writeCheck(); await forcePushAll(); listen(); refreshUI(); return; }
-    meta.keys = {};
+    if (S.linkMode !== 'replace') {                                       // Combiner : on fusionne, rien n'est effacé
+      for (const d of snap.docs) {
+        if (d.id === CHECK_ID) continue; const r = d.data(); let v;
+        try { v = typeof r.c === 'string' ? await decrypt(r.c) : r.v; } catch (e) { continue; }
+        if (typeof v !== 'string') continue;
+        try { DB[d.id] = DB[d.id] === undefined ? JSON.parse(v) : mergeData(DB[d.id], JSON.parse(v)); } catch (e) {}
+      }
+      _save(); meta.keys = {}; meta.linked = true; saveMeta();
+      if (ok === null) await writeCheck();
+      await forcePushAll(); listen(); refreshUI();
+      try { if (!document.getElementById('screen').classList.contains('open')) renderHome(); } catch (e) {}
+      toast('🔄 Données combinées'); return;
+    }
+    meta.keys = {};                                                       // Remplacer : l'appareil reprend la sauvegarde du compte
   }
   if (!remoteHasData) meta.keys = {};
   meta.linked = true; saveMeta();
@@ -180,6 +210,9 @@ function drawPanel(el) {
     el.innerHTML = `<div class="card" style="background:var(--grad-soft)"><b>📱 Mode actuel : stockage local</b><p class="muted" style="margin:4px 0 0">Vos données restent uniquement sur cet appareil. Connectez-vous ci-dessous pour les synchroniser avec vos autres appareils.</p></div>
       <div class="card" style="margin-top:12px"><h3>☁️ Passer en mode « compte e-mail »</h3>
         <p class="muted" style="margin:4px 0 0">Créez un compte une fois, puis connectez-vous avec le même compte sur chaque appareil.</p>
+        <p style="margin:12px 0 6px;font-weight:700;font-size:.92rem">Si ce compte contient déjà des données, que faire de celles de cet appareil ?</p>
+        <label class="card" style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin:0 0 8px;border:1.5px solid var(--line);cursor:pointer;color:var(--text);font-weight:400"><input type="radio" name="sy-lm" value="merge" ${S.linkMode !== 'replace' ? 'checked' : ''} style="width:auto;margin-top:3px"><span><b>Combiner</b><br><span class="muted" style="font-size:.85rem">Ajoute les données du compte sans effacer celles de l'appareil.</span></span></label>
+        <label class="card" style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin:0;border:1.5px solid var(--line);cursor:pointer;color:var(--text);font-weight:400"><input type="radio" name="sy-lm" value="replace" ${S.linkMode === 'replace' ? 'checked' : ''} style="width:auto;margin-top:3px"><span><b>Remplacer</b><br><span class="muted" style="font-size:.85rem">Efface cet appareil puis récupère les données du compte.</span></span></label>
         <label>E-mail</label><input id="sy-mail" type="email" autocomplete="username" value="${esc(meta.mail || '')}">
         <label>Mot de passe (6 caractères minimum)</label><input id="sy-pass" type="password" autocomplete="current-password">${errP}
         <div class="row" style="margin-top:12px"><button class="btn btn-grad" id="sy-in">Se connecter</button><button class="btn btn-ghost" id="sy-new">Créer un compte</button></div>
@@ -213,6 +246,7 @@ function drawPanel(el) {
       toast('Données en ligne supprimées' + accountMsg + ' ✔');
     });
   } else {
+    el.querySelectorAll('[name=sy-lm]').forEach(r => r.onchange = () => { S.linkMode = r.value; });
     const creds = () => { const m = $('#sy-mail').value.trim(), p = $('#sy-pass').value; meta.mail = m; saveMeta(); return [m, p]; };
     const login = create => run(async () => { if (!fb) throw new Error('Firebase indisponible (hors ligne ?)');
       const [m, p] = creds(); if (!m || !p) throw new Error('E-mail et mot de passe requis.');
