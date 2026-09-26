@@ -93,11 +93,17 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .tog{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .tog button{padding:9px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-weight:800;font-size:.85rem}
 .tog button.on{background:var(--grad);color:#fff;border-color:transparent}
+.pl-chip{padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-weight:700;font-size:.82rem;cursor:pointer}
+.pl-chip.sel{background:var(--grad);color:#fff;border-color:transparent}
+.mt-team{cursor:pointer}
+.mt-team .pls{display:flex;flex-wrap:wrap;gap:5px}
+.roster{font-size:.75rem;color:var(--muted);text-align:center;margin-top:4px}
 .win{text-align:center;font-size:1.3rem;font-weight:900;padding:14px;border-radius:16px;background:var(--grad);color:#fff}
 </style>`);
 
 TOOL_IMPL.match = function (el) {
-  let S = { sport: 'handball', a: 'Équipe A', b: 'Équipe B', type: 'temps', dur: 10, target: 21, ecart: true, bonus: [1, 2, 5], stats: true, zones: false, nz: 4 };
+  let S = { sport: 'handball', a: 'Équipe A', b: 'Équipe B', type: 'temps', dur: 10, target: 21, ecart: true, bonus: [1, 2, 5], stats: true, zones: false, nz: 4, ia: 0, ib: 1 };
+  let selPl = null;
   let M = null, iv = null;
   const SP = () => SPORTS[S.sport];
 
@@ -107,7 +113,10 @@ TOOL_IMPL.match = function (el) {
     const sp = SP();
     el.innerHTML = `<div class="card"><h3>Sport</h3><div class="tog" id="sp">${Object.entries(SPORTS).map(([k, x]) => `<button data-s="${k}" class="${k === S.sport ? 'on' : ''}">${x.name}</button>`).join('')}</div></div>
       <div class="court" style="margin-top:12px;background:${courtSVG(S.sport).bg}"><svg viewBox="${courtSVG(S.sport).vb}">${courtSVG(S.sport).svg}</svg></div>
-      <div class="card" style="margin-top:12px"><h3>Équipes</h3><div class="row"><div><label>Équipe A</label><input id="na" value="${esc(S.a)}"></div><div><label>Équipe B</label><input id="nb" value="${esc(S.b)}"></div></div></div>
+      <div class="card" style="margin-top:12px"><h3>Équipes</h3>
+        <details id="mt-d" ${DB.classes.length && !DB.matchTeams ? 'open' : ''}><summary style="font-weight:800;cursor:pointer">👥 Constituer les équipes avec les élèves d'une classe</summary><div id="mt-host" style="margin-top:6px"></div></details>
+        ${teamsBlock()}
+        <div class="row"><div><label>Nom équipe A</label><input id="na" value="${esc(S.a)}"></div><div><label>Nom équipe B</label><input id="nb" value="${esc(S.b)}"></div></div></div>
       <div class="card" style="margin-top:12px"><h3>Règles du match</h3>
         <div class="tog" id="ty"><button data-t="temps" class="${S.type === 'temps' ? 'on' : ''}">⏱ Match au temps</button><button data-t="points" class="${S.type === 'points' ? 'on' : ''}">🎯 Match au point</button></div>
         ${S.type === 'temps' ? `<label>Durée (minutes)</label><input id="du" type="number" min="1" value="${S.dur}">`
@@ -131,11 +140,44 @@ TOOL_IMPL.match = function (el) {
     el.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { S.nz = +b.dataset.n; el.querySelectorAll('[data-n]').forEach(x => x.classList.toggle('on', x === b)); });
     if ($('#zo')) $('#zo').onchange = () => $('#nzw').style.display = $('#zo').checked ? 'block' : 'none';
     $('#go').onclick = () => { keep(); start(); };
+    wireTeams();
     el.querySelectorAll('[data-x]').forEach(b => b.onclick = () => { if (confirm('Supprimer ce match de l\'historique ?')) { DB.matchs.splice(+b.dataset.x, 1); save(); setup(); } });
     el.querySelectorAll('[data-v]').forEach(b => b.onclick = () => summary(DB.matchs[+b.dataset.v], true));
     if ($('#hx')) $('#hx').onclick = () => download(`matchs-${new Date().toISOString().slice(0, 10)}.csv`, csv([
-      ['Date', 'Sport', 'Équipe A', 'Score A', 'Score B', 'Équipe B', 'Tirs A', 'Marqués A', 'Pertes A', 'Passes déc. A', 'Bonus A', 'Tirs B', 'Marqués B', 'Pertes B', 'Passes déc. B', 'Bonus B'],
-      ...DB.matchs.map(m => [new Date(m.date).toLocaleString('fr-FR'), SPORTS[m.sport]?.name || m.sport, m.a, m.sa, m.sb, m.b, ...[0, 1].flatMap(t => { const s = m.stats[t]; return [s.tirs, s.marques, s.pertes, s.passes, s.bonus]; })])]));
+      ['Date', 'Sport', 'Équipe A', 'Score A', 'Score B', 'Équipe B', 'Tirs A', 'Marqués A', 'Pertes A', 'Passes déc. A', 'Bonus A', 'Tirs B', 'Marqués B', 'Pertes B', 'Passes déc. B', 'Bonus B', 'Joueurs A', 'Joueurs B'],
+      ...DB.matchs.map(m => [new Date(m.date).toLocaleString('fr-FR'), SPORTS[m.sport]?.name || m.sport, m.a, m.sa, m.sb, m.b, ...[0, 1].flatMap(t => { const s = m.stats[t]; return [s.tirs, s.marques, s.pertes, s.passes, s.bonus]; }), (m.pa || []).join(', '), (m.pb || []).join(', ')])]));
+  }
+
+  /* ----- Équipes constituées avec les élèves ----- */
+  const T = () => DB.matchTeams && DB.matchTeams.teams && DB.matchTeams.teams.length ? DB.matchTeams : null;
+  const membersOf = i => (T() && T().teams[i] ? T().teams[i].members : []);
+  function teamsBlock() {
+    const t = T(); if (!t) return '';
+    if (S.ia >= t.teams.length) S.ia = 0; if (S.ib >= t.teams.length || S.ib === S.ia) S.ib = S.ia === 0 ? Math.min(1, t.teams.length - 1) : 0;
+    const opt = sel => t.teams.map((x, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${esc(x.name)}</option>`).join('');
+    return `<div style="margin-top:10px"><div class="muted" style="font-size:.8rem">${t.cls ? 'Classe ' + esc(t.cls) + ' · ' : ''}touchez un élève puis une autre équipe pour le déplacer.</div>
+      <div class="teams">${t.teams.map((x, i) => `<div class="card team mt-team" data-tm="${i}" style="border-top:5px solid ${i === S.ia ? '#B8912A' : i === S.ib ? '#1E5BD8' : 'var(--line)'}">
+        <h3><span>${esc(x.name)}${i === S.ia ? ' · A' : i === S.ib ? ' · B' : ''}</span><span class="muted">${x.members.length}</span></h3>
+        <div class="pls">${x.members.map((n, j) => `<button class="pl-chip ${selPl === i + '|' + j ? 'sel' : ''}" data-pl="${i}|${j}">${esc(n)}</button>`).join('') || '<span class="muted">—</span>'}</div></div>`).join('')}</div>
+      ${t.teams.length > 1 ? `<div class="row"><div><label>Équipe A (sur le terrain)</label><select id="ia">${opt(S.ia)}</select></div><div><label>Équipe B</label><select id="ib">${opt(S.ib)}</select></div></div>` : ''}
+      <button class="link" id="mt-clr" style="margin-top:8px">Effacer la composition</button></div>`;
+  }
+  function wireTeams() {
+    const $ = s => el.querySelector(s);
+    const host = $('#mt-host');
+    if (host) { mountComposer(host, { id: 'mt', modes: ['random', 'hetero', 'homo'], button: '🧩 Former les équipes',
+      onTeams: teams => { const $n = s => el.querySelector(s); if ($n('#na')) { S.a = $n('#na').value; S.b = $n('#nb').value; }
+        DB.matchTeams = { cls: el.querySelector('#mt-cls')?.value || '', teams: teams.map(x => ({ name: x.name, members: x.members.map(m => m.n) })) };
+        S.ia = 0; S.ib = teams.length > 1 ? 1 : 0; S.a = teams[S.ia].name; S.b = teams[S.ib].name; selPl = null; save(); setup(); } });
+      const v = el.querySelector('#mt-v'); if (v && !DB.matchTeams) v.value = 2; }
+    const t = T(); if (!t) return;
+    const pick = (k, i) => { S.a = $('#na').value; S.b = $('#nb').value; S[k] = i; if (k === 'ia') S.a = t.teams[i].name; else S.b = t.teams[i].name; setup(); };
+    if ($('#ia')) $('#ia').onchange = e => pick('ia', +e.target.value);
+    if ($('#ib')) $('#ib').onchange = e => pick('ib', +e.target.value);
+    el.querySelectorAll('[data-pl]').forEach(b => b.onclick = ev => { ev.stopPropagation(); selPl = selPl === b.dataset.pl ? null : b.dataset.pl; S.a = $('#na').value; S.b = $('#nb').value; setup(); });
+    el.querySelectorAll('[data-tm]').forEach(c => c.onclick = () => { if (!selPl) return; const [i, j] = selPl.split('|').map(Number), k = +c.dataset.tm; selPl = null;
+      if (k !== i) { const [n] = t.teams[i].members.splice(j, 1); t.teams[k].members.push(n); save(); } S.a = $('#na').value; S.b = $('#nb').value; setup(); });
+    $('#mt-clr').onclick = () => { if (!confirm('Effacer la composition des équipes ?')) return; DB.matchTeams = null; selPl = null; S.a = 'Équipe A'; S.b = 'Équipe B'; save(); setup(); };
   }
 
   /* ===== 2. Match ===== */
@@ -150,7 +192,7 @@ TOOL_IMPL.match = function (el) {
   const now = () => M.acc + (M.run ? performance.now() - M.t0 : 0);
 
   function start() {
-    M = { ev: [], acc: 0, t0: 0, run: false, poss: 0, over: false };
+    M = { ev: [], acc: 0, t0: 0, run: false, poss: 0, over: false, pa: T() ? [...membersOf(S.ia)] : [], pb: T() ? [...membersOf(S.ib)] : [] };
     const sp = SP(), c = courtSVG(S.sport), zonesOn = sp.zones && S.zones;
     const vbW = +c.vb.split(' ')[2], vbH = +c.vb.split(' ')[3];
     const bands = zonesOn ? Array.from({ length: S.nz }, (_, z) => { const w = vbW / S.nz;
@@ -161,6 +203,7 @@ TOOL_IMPL.match = function (el) {
         <div class="ck"><div class="muted" style="font-size:.72rem;font-weight:800">${S.type === 'temps' ? 'TEMPS RESTANT' : 'TEMPS'}</div><b id="ck">${S.type === 'temps' ? fmt(S.dur * 60000, false) : '00:00'}</b>
           <div class="row" style="margin-top:6px;gap:6px"><button class="btn btn-grad" style="padding:9px 12px;font-size:.85rem" id="go">▶ Démarrer</button></div></div>
         <div class="tm b"><span>${esc(S.b)}</span><b id="sb">0</b></div></div>
+      ${M.pa.length || M.pb.length ? `<div class="roster"><b style="color:#B8912A">${esc(S.a)}</b> : ${M.pa.map(esc).join(', ') || '—'}<br><b style="color:#1E5BD8">${esc(S.b)}</b> : ${M.pb.map(esc).join(', ') || '—'}</div>` : ''}
       <div class="muted" style="text-align:center;margin-top:6px;font-size:.8rem">${S.type === 'temps' ? `Match au temps · ${S.dur} min` : `Match en ${S.target} points${S.ecart ? ' (2 pts d\'écart)' : ''}`} · ${sp.name}</div>
       ${zonesOn ? `<div class="poss">Ballon :<button class="a on" data-p="0">${esc(S.a)} ➜</button><button class="b" data-p="1">⬅ ${esc(S.b)}</button></div>` : '<div style="height:10px"></div>'}
       <div class="court" style="background:${c.bg}"><svg viewBox="${c.vb}">${c.svg}${bands}</svg></div>
@@ -219,7 +262,7 @@ TOOL_IMPL.match = function (el) {
   function finish() {
     if (!M) return; M.over = true; M.run = false; clearInterval(iv);
     const rec = { date: Date.now(), sport: S.sport, a: S.a, b: S.b, sa: scoreOf(0), sb: scoreOf(1), duree: Math.round(M.acc / 1000), nz: SP().zones && S.zones ? S.nz : 0,
-      coll: SP().coll && S.stats, stats: stats(M.ev, SP().zones && S.zones ? S.nz : 0), ev: M.ev };
+      pa: M.pa, pb: M.pb, coll: SP().coll && S.stats, stats: stats(M.ev, SP().zones && S.zones ? S.nz : 0), ev: M.ev };
     summary(rec, false);
   }
 
@@ -229,6 +272,7 @@ TOOL_IMPL.match = function (el) {
     const row = (l, f) => `<tr><td>${l}</td><td><b>${f(m.stats[0], 0)}</b></td><td><b>${f(m.stats[1], 1)}</b></td></tr>`;
     el.innerHTML = `<div class="win">${win}</div>
       <div class="sb" style="margin-top:12px"><div class="tm a"><span>${esc(m.a)}</span><b>${m.sa}</b></div><div class="ck"><b>–</b><div class="muted" style="font-size:.75rem">${fmt(m.duree * 1000, false)}</div></div><div class="tm b"><span>${esc(m.b)}</span><b>${m.sb}</b></div></div>
+      ${(m.pa || []).length || (m.pb || []).length ? `<div class="roster" style="margin-top:8px"><b style="color:#B8912A">${esc(m.a)}</b> : ${(m.pa || []).map(esc).join(', ') || '—'}<br><b style="color:#1E5BD8">${esc(m.b)}</b> : ${(m.pb || []).map(esc).join(', ') || '—'}</div>` : ''}
       <div class="section-title"><h2>Statistiques · ${esc(sp?.name || '')}</h2></div>
       <div class="card" style="overflow:auto"><table><tr><th></th><th>${esc(m.a)}</th><th>${esc(m.b)}</th></tr>
         ${row('Score', (s, t) => t ? m.sb : m.sa)}
@@ -247,7 +291,7 @@ TOOL_IMPL.match = function (el) {
     $('#sv').onclick = () => { DB.matchs.push(m); save(); toast('Match enregistré ✔'); setup(); };
     $('#nw').onclick = () => { if (confirm('Quitter sans enregistrer ?')) setup(); };
     $('#rs').onclick = () => { // revenir au match (ex. fin par erreur)
-      const saved = M; start(); M.ev = saved.ev; M.acc = saved.acc; M.poss = saved.poss; M.over = false; paint(); tick(); };
+      const saved = M; start(); M.ev = saved.ev; M.acc = saved.acc; M.pa = saved.pa; M.pb = saved.pb; M.poss = saved.poss; M.over = false; paint(); tick(); };
   }
 
   setup();
