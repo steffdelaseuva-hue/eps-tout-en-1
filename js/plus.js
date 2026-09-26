@@ -2,9 +2,11 @@
    EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '3.3';
+const APP_VERSION = '3.5';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-one/';
 const CHANGELOG = [
+  { v: '3.5', items: ['Chiffrement de bout en bout de la synchronisation (clé tirée du mot de passe)'] },
+  { v: '3.4', items: ['Confidentialité : conseils reformulés'] },
   { v: '3.3', items: ['Choix du mode de stockage au premier lancement (local ou compte e-mail)', 'Indicateur du mode dans Plus', 'Suppression des données en ligne', 'Page Confidentialité & RGPD mise à jour'] },
   { v: '3.2', items: ['Synchronisation branchée sur le projet Firebase EPS ONE'] },
   { v: '3.1', items: ['Synchronisation iPhone ↔ iPad (compte + Firebase)'] },
@@ -150,7 +152,7 @@ function openPrivacy() {
           <li>Elles sont rattachées à votre compte : les règles de sécurité font que <b>seul votre compte peut les lire ou les modifier</b>.</li>
           <li>L'adresse e-mail sert uniquement à la connexion. Le mot de passe est géré par Firebase Authentication et n'est jamais visible par l'app.</li>
           <li>Vous pouvez à tout moment <b>supprimer toutes vos données en ligne</b> (Plus → Stockage & synchronisation) : la synchronisation s'arrête et les données restent seulement sur l'appareil.</li>
-          <li>Avant d'utiliser ce mode pour des données d'élèves, il est recommandé d'en informer votre chef d'établissement et le délégué à la protection des données (DPD) de l'académie.</li></ul>
+          <li><b>Conseil</b> : en mode synchronisé, préférez <b>prénom + initiale</b> pour les élèves. Pour toute question sur l'usage d'outils numériques avec des données d'élèves, votre établissement reste l'interlocuteur de référence.</li></ul>
         <h3>📷 Caméra</h3>
         <p>La vidéo différée et le photo-finish utilisent la caméra uniquement pendant que l'outil est ouvert. Les images restent en mémoire vive, ne sont jamais enregistrées ni envoyées, et sont effacées à la fermeture de l'outil.</p>
         <h3>🌐 Hébergement</h3>
@@ -161,7 +163,7 @@ function openPrivacy() {
           <li><b>Exports</b> (CSV, JSON) : les ranger dans un espace sécurisé (ENT, espace professionnel), pas sur une clé USB perdue ou un cloud personnel.</li>
           <li><b>Appareil</b> : verrouiller la tablette par un code, surtout si elle est partagée.</li>
           <li><b>Durée</b> : effacer les données en fin d'année avec « Nouvelle année scolaire ».</li></ul>
-        <p>Pour toute question sur l'usage de données d'élèves dans votre établissement, rapprochez-vous de votre chef d'établissement et du délégué à la protection des données (DPD) de votre académie. Ces informations ne constituent pas un avis juridique.</p>
+        <p class="muted">Ces informations sont données à titre indicatif et ne constituent pas un avis juridique.</p>
       </div>
       <div class="section-title"><h2>Mes données sur cet appareil</h2></div>
       <div class="card"><div class="result" style="margin-top:0">

@@ -1,5 +1,5 @@
 // EPS ONE — fonctionnement hors ligne (réseau d'abord, cache en secours)
-const CACHE = 'eps-one-v33';
+const CACHE = 'eps-one-v35';
 const FILES = ['./', './index.html', './js/icons.js', './js/outils-plus.js', './js/test-vma.js', './js/import-classes.js', './js/niveaux.js', './js/match.js', './js/orientation.js', './js/natation.js', './js/crosstraining.js', './js/parkour.js', './js/duathlon.js', './js/combine.js', './js/sauvegardes.js', './js/grilles.js', './js/qr.js', './js/plus.js', './js/musique.js', './js/firebase-config.js', './js/sync.js', './outils/chronos-eps.html',
   './manifest.webmanifest', './icons/icone-v3-192.png', './icons/chronos-eps.png', './icons/icone-v3-512.png', './icons/icone-v3-180.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
