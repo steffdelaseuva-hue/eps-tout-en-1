@@ -98,7 +98,7 @@ window.addEventListener('online', () => S.user && pushChanged());
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.user) pushChanged(); });
 
 /* ---------- Interface ---------- */
-const statusText = () => ({ unconfigured: 'Non configurée', off: 'Non connecté', sync: 'Synchronisation…', ok: `Connecté · ${S.user?.email || ''}`, error: 'Erreur de synchronisation' })[S.status] || '';
+const statusText = () => S.user ? ({ sync: 'Mode : synchronisé · envoi…', error: 'Mode : synchronisé · erreur' })[S.status] || `Mode : synchronisé · ${S.user.email}` : 'Mode : stockage local (cet appareil uniquement)';
 function refreshUI() {
   const sub = document.getElementById('sync-sub'); if (sub) sub.textContent = statusText();
   const box = document.getElementById('sync-panel'); if (box) drawPanel(box);
@@ -113,9 +113,13 @@ function drawPanel(el) {
   el.innerHTML = S.user ? `<div class="card"><h3>☁️ Synchronisation activée</h3>
         <p style="margin:6px 0">Compte : <b>${esc(S.user.email)}</b></p><p class="muted" style="margin:0">État : ${statusText()} · dernière synchro : ${last}</p>
         ${S.err ? `<p style="color:var(--danger);font-size:.85rem">${esc(S.err)}</p>` : ''}
-        <div class="row" style="margin-top:12px"><button class="btn btn-grad" id="sy-now">🔄 Synchroniser maintenant</button><button class="btn btn-ghost" id="sy-out">Se déconnecter</button></div></div>
+        <div class="row" style="margin-top:12px"><button class="btn btn-grad" id="sy-now">🔄 Synchroniser maintenant</button><button class="btn btn-ghost" id="sy-out">Revenir en stockage local</button></div></div>
+      <div class="card" style="margin-top:12px"><h3>🗑 Supprimer mes données en ligne</h3>
+        <p class="muted" style="margin:4px 0 10px">Efface toutes vos données stockées sur Firebase et arrête la synchronisation. Les données restent sur cet appareil.</p>
+        <button class="btn btn-danger btn-block" id="sy-del">Supprimer mes données en ligne</button></div>
       <p class="muted" style="margin:12px 4px">Connectez-vous avec le même compte sur l'iPhone et l'iPad : classes, résultats, grilles, séances… se mettent à jour automatiquement. Sans réseau, l'app continue de marcher et se synchronise au retour de la connexion.</p>`
-    : `<div class="card"><h3>☁️ Synchronisation iPhone ↔ iPad</h3>
+    : `<div class="card" style="background:var(--grad-soft)"><b>📱 Mode actuel : stockage local</b><p class="muted" style="margin:4px 0 0">Vos données restent uniquement sur cet appareil. Connectez-vous ci-dessous pour les synchroniser avec vos autres appareils.</p></div>
+      <div class="card" style="margin-top:12px"><h3>☁️ Passer en mode « compte e-mail »</h3>
         <p class="muted" style="margin:4px 0 0">Créez un compte une fois, puis connectez-vous avec le même compte sur chaque appareil.</p>
         <label>E-mail</label><input id="sy-mail" type="email" autocomplete="username" value="${esc(meta.mail || '')}">
         <label>Mot de passe (6 caractères minimum)</label><input id="sy-pass" type="password" autocomplete="current-password">
@@ -127,16 +131,45 @@ function drawPanel(el) {
   const run = async fn => { S.err = ''; try { await fn(); } catch (e) { S.err = ({ 'auth/invalid-credential': 'E-mail ou mot de passe incorrect.', 'auth/wrong-password': 'Mot de passe incorrect.', 'auth/user-not-found': 'Aucun compte avec cet e-mail.', 'auth/email-already-in-use': 'Un compte existe déjà avec cet e-mail : connectez-vous.', 'auth/weak-password': 'Mot de passe trop court (6 caractères minimum).', 'auth/invalid-email': 'E-mail invalide.', 'auth/network-request-failed': 'Pas de connexion internet.' })[e.code] || e.message; } refreshUI(); };
   if (S.user) {
     $('#sy-now').onclick = () => run(async () => { Object.keys(meta.keys).forEach(k => { if (meta.keys[k]) meta.keys[k].h = 'x'; }); await pushChanged(); toast('Synchronisé ✔'); });
-    $('#sy-out').onclick = () => run(async () => { if (!confirm('Se déconnecter ? Les données restent sur cet appareil.')) return; await fb.authM.signOut(fb.auth); });
+    $('#sy-out').onclick = () => run(async () => { if (!confirm('Revenir en stockage local ?\nLa synchronisation s\'arrête sur cet appareil. Vos données restent ici et en ligne.')) return; setMode('local'); await fb.authM.signOut(fb.auth); });
+    $('#sy-del').onclick = () => run(async () => {
+      if (!confirm('Supprimer toutes vos données en ligne ?\nElles resteront seulement sur cet appareil. Vos autres appareils ne seront plus synchronisés.')) return;
+      const { collection, getDocs, deleteDoc } = fb.fs; unsub && unsub(); unsub = null;
+      const snap = await getDocs(collection(fb.db, 'epsone', S.user.uid, 'data'));
+      await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+      let accountMsg = '';
+      try { await fb.authM.deleteUser(fb.auth.currentUser); accountMsg = ' et compte supprimé'; } catch (e) { await fb.authM.signOut(fb.auth); }
+      meta.keys = {}; meta.linked = false; saveMeta(); setMode('local');
+      toast('Données en ligne supprimées' + accountMsg + ' ✔');
+    });
   } else {
     const creds = () => { const m = $('#sy-mail').value.trim(), p = $('#sy-pass').value; meta.mail = m; saveMeta(); return [m, p]; };
-    $('#sy-in').onclick = () => run(() => { if (!fb) throw new Error('Firebase indisponible (hors ligne ?)'); return fb.authM.signInWithEmailAndPassword(fb.auth, ...creds()); });
-    $('#sy-new').onclick = () => run(() => { if (!fb) throw new Error('Firebase indisponible (hors ligne ?)'); return fb.authM.createUserWithEmailAndPassword(fb.auth, ...creds()); });
+    $('#sy-in').onclick = () => run(() => { if (!fb) throw new Error('Firebase indisponible (hors ligne ?)'); setMode('cloud'); return fb.authM.signInWithEmailAndPassword(fb.auth, ...creds()); });
+    $('#sy-new').onclick = () => run(() => { if (!fb) throw new Error('Firebase indisponible (hors ligne ?)'); setMode('cloud'); return fb.authM.createUserWithEmailAndPassword(fb.auth, ...creds()); });
     $('#sy-forgot').onclick = () => run(async () => { const [m] = creds(); if (!m) throw new Error('Indiquez votre e-mail.'); await fb.authM.sendPasswordResetEmail(fb.auth, m); toast('E-mail de réinitialisation envoyé'); });
   }
 }
 window.openSync = () => openPanel('Synchronisation', el => { const d = document.createElement('div'); el.appendChild(d); drawPanel(d); });
 window.syncStatusText = statusText;
 
+/* ---------- Mode de stockage (par appareil) ---------- */
+function getMode() { try { return localStorage.getItem('epsone_mode'); } catch (e) { return null; } }
+function setMode(m) { try { localStorage.setItem('epsone_mode', m); } catch (e) {} try { renderPlus(); } catch (e) {} }
+function chooser() {
+  if (getMode() || meta.linked || !window.EPSONE_FIREBASE) { if (!getMode()) setMode(meta.linked ? 'cloud' : 'local'); return; }
+  const o = document.createElement('div');
+  o.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(7,18,42,.72);display:grid;place-items:center;padding:16px';
+  o.innerHTML = `<div class="card" style="max-width:460px;width:100%">
+      <h3 style="font-size:1.2rem">Où enregistrer vos données ?</h3>
+      <p class="muted" style="margin:6px 0 12px">Vous pourrez changer d'avis à tout moment dans Plus → Stockage & synchronisation.</p>
+      <button class="menu-item card" data-m="local" style="width:100%;text-align:left;margin-bottom:10px;border:1.5px solid var(--line)"><span class="mi-ic blue" style="font-size:1.4rem">📱</span><span><b>Stockage local</b><span class="muted">Les données restent sur cet appareil. Rien n'est envoyé en ligne.</span></span></button>
+      <button class="menu-item card" data-m="cloud" style="width:100%;text-align:left;border:1.5px solid var(--line)"><span class="mi-ic gold" style="font-size:1.4rem">☁️</span><span><b>Compte e-mail</b><span class="muted">Synchronisation entre vos appareils (iPhone, iPad, ordinateur). Données stockées en Europe, visibles par vous seul.</span></span></button>
+    </div>`;
+  document.body.appendChild(o);
+  o.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { const m = b.dataset.m; o.remove();
+    if (m === 'local') { setMode('local'); toast('Mode stockage local ✔'); } else { setMode('cloud'); window.openSync(); } });
+}
+
 boot();
 try { renderPlus(); } catch (e) {}
+setTimeout(chooser, 600);

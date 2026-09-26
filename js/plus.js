@@ -2,9 +2,10 @@
    EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '3.2';
+const APP_VERSION = '3.3';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-one/';
 const CHANGELOG = [
+  { v: '3.3', items: ['Choix du mode de stockage au premier lancement (local ou compte e-mail)', 'Indicateur du mode dans Plus', 'Suppression des données en ligne', 'Page Confidentialité & RGPD mise à jour'] },
   { v: '3.2', items: ['Synchronisation branchée sur le projet Firebase EPS ONE'] },
   { v: '3.1', items: ['Synchronisation iPhone ↔ iPad (compte + Firebase)'] },
   { v: '3.0', items: ['Nouvelle adresse : steffdelaseuva-hue.github.io/eps-one/'] },
@@ -139,15 +140,21 @@ function openPrivacy() {
     const nbEleves = DB.classes.reduce((a, c) => a + c.students.length, 0);
     el.innerHTML = `<div class="card doc">
         <h3>🔐 En résumé</h3>
-        <ul><li><b>Aucun compte</b>, aucune inscription.</li>
-          <li><b>Aucune donnée envoyée sur un serveur</b> : tout reste dans le navigateur de cet appareil.</li>
-          <li><b>Aucune publicité</b>, aucun cookie de suivi, aucune statistique de visite.</li></ul>
-        <h3>📦 Où sont stockées les données ?</h3>
-        <p>Classes, listes d'élèves, évaluations, suivi, dispenses… sont enregistrés dans le stockage local du navigateur (localStorage) de cet appareil uniquement. Elles ne sont ni synchronisées ni partagées. Effacer les données de Safari/Chrome ou désinstaller l'app les supprime.</p>
+        <ul><li><b>Deux modes au choix</b> : <b>stockage local</b> (par défaut, rien n'est envoyé en ligne) ou <b>compte e-mail</b> pour synchroniser ses appareils.</li>
+          <li><b>Aucune publicité</b>, aucun cookie de suivi, aucune statistique de visite.</li>
+          <li>Mode actuel sur cet appareil : <b>${window.EPSONE_SYNC && window.EPSONE_SYNC.user ? 'Synchronisé (' + esc(window.EPSONE_SYNC.user.email) + ')' : 'Stockage local'}</b>.</li></ul>
+        <h3>📱 Mode « Stockage local »</h3>
+        <p>Classes, listes d'élèves, évaluations, suivi, dispenses… sont enregistrés uniquement dans le navigateur de cet appareil (stockage local). Rien n'est envoyé sur un serveur, rien n'est partagé. Effacer les données de Safari/Chrome ou désinstaller l'app les supprime : pensez à exporter régulièrement une sauvegarde.</p>
+        <h3>☁️ Mode « Compte e-mail » (synchronisation)</h3>
+        <ul><li>Les données sont copiées dans une base de données <b>Google Firebase (Cloud Firestore)</b>, hébergée <b>en Europe (Paris, europe-west9)</b>, pour être retrouvées sur vos autres appareils.</li>
+          <li>Elles sont rattachées à votre compte : les règles de sécurité font que <b>seul votre compte peut les lire ou les modifier</b>.</li>
+          <li>L'adresse e-mail sert uniquement à la connexion. Le mot de passe est géré par Firebase Authentication et n'est jamais visible par l'app.</li>
+          <li>Vous pouvez à tout moment <b>supprimer toutes vos données en ligne</b> (Plus → Stockage & synchronisation) : la synchronisation s'arrête et les données restent seulement sur l'appareil.</li>
+          <li>Avant d'utiliser ce mode pour des données d'élèves, il est recommandé d'en informer votre chef d'établissement et le délégué à la protection des données (DPD) de l'académie.</li></ul>
         <h3>📷 Caméra</h3>
         <p>La vidéo différée et le photo-finish utilisent la caméra uniquement pendant que l'outil est ouvert. Les images restent en mémoire vive, ne sont jamais enregistrées ni envoyées, et sont effacées à la fermeture de l'outil.</p>
         <h3>🌐 Hébergement</h3>
-        <p>L'application est hébergée sur GitHub Pages. Comme pour tout site web, l'hébergeur peut enregistrer des données techniques de connexion (adresse IP) lors du chargement de la page. Aucune donnée d'élève ne transite par ce biais.</p>
+        <p>L'application est hébergée sur GitHub Pages. Comme pour tout site web, l'hébergeur peut enregistrer des données techniques de connexion (adresse IP) lors du chargement de la page. Aucune donnée d'élève ne transite par ce biais (en mode synchronisé, elles transitent uniquement vers Firebase, de façon chiffrée).</p>
         <h3>🧑‍🏫 Bonnes pratiques pour l'enseignant</h3>
         <ul><li><b>Minimiser</b> : prénom + initiale du nom suffisent le plus souvent.</li>
           <li><b>Dispenses</b> : ne pas saisir de motif médical ni de diagnostic, seulement les dates et les aménagements.</li>
@@ -247,7 +254,7 @@ function renderPlus() {
   box.innerHTML = `
     <div class="menu-sec">Données & partage</div>
     <div class="card" style="padding:0">
-      ${item('update', 'grad', 'Synchronisation iPhone ↔ iPad', `<span id="sync-sub">${window.syncStatusText ? window.syncStatusText() : 'Non configurée'}</span>`, 'openSync()')}
+      ${item('update', 'grad', 'Stockage & synchronisation', `<span id="sync-sub">${window.syncStatusText ? window.syncStatusText() : 'Mode : stockage local'}</span>`, 'openSync()')}
       ${item('save', 'blue', 'Exporter mes données', 'Fichier de sauvegarde JSON', 'exportData()')}
       ${item('restore', 'blue', 'Importer une sauvegarde', 'Restaurer depuis un fichier JSON', "document.getElementById('imp').click()")}
       ${item('share', 'grad', 'Partager l\'app', 'QR code et lien', 'openShare()')}
