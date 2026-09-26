@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#0B2A5B">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>EPS Tout en 1</title>
-<meta name="apple-mobile-web-app-title" content="EPS Tout en 1">
+<title>EPS ONE</title>
+<meta name="apple-mobile-web-app-title" content="EPS ONE">
 <script src="js/icons.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icone-v2-192.png">
-<link rel="apple-touch-icon" href="icons/icone-v2-180.png">
+<link rel="icon" href="icons/icone-v3-192.png">
+<link rel="apple-touch-icon" href="icons/icone-v3-180.png">
 <style>
 :root{
   --gold:#C9A227; --gold2:#E6C76E; --blue:#1E5BD8; --navy:#0B2A5B; --navy2:#071A3A;
@@ -177,9 +177,9 @@ th{color:var(--muted);font-size:.78rem;text-transform:uppercase}
 
 <!-- ============ HEADER ============ -->
 <div class="topbar">
-  <img class="logo" src="icons/icone-v2-192.png" alt="">
+  <img class="logo" src="icons/icone-v3-192.png" alt="">
   <div>
-    <h1>EPS Tout en 1</h1>
+    <h1>EPS ONE</h1>
     <div class="sub">by Steff64</div>
   </div>
   <div class="spacer"></div>
@@ -631,7 +631,7 @@ rm(el){
    ========================================================= */
 function exportData(){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eps-tout-en-1-'+new Date().toISOString().slice(0,10)+'.json';a.click();if(typeof renderPlus==='function')renderPlus();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eps-one-'+new Date().toISOString().slice(0,10)+'.json';a.click();if(typeof renderPlus==='function')renderPlus();
   toast('Sauvegarde exportée ✔');
 }
 function importData(inp){

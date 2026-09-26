@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Grilles d'évaluation (v2)
+   EPS ONE — Grilles d'évaluation (v2)
    · Grilles par points (note /20) ou par compétences (niveaux)
    · Niveaux personnalisables, descripteurs par critère
    · Import CSV / Excel (export iDoceo, tableur…) + modèles

@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Sauvegarde des résultats par classe / élève
+   EPS ONE — Sauvegarde des résultats par classe / élève
    · Carte « Enregistrer pour un élève » ajoutée aux outils de mesure
    · Outil « Résultats des élèves » (consultation, export)
    ========================================================= */

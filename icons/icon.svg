@@ -17,19 +17,30 @@
     <path d="M-40 850 Q512 630 1064 850" stroke-width="16" opacity=".28"/>
   </g>
   <!-- traits de vitesse -->
-  <g stroke="#fff" stroke-linecap="round" stroke-width="26" opacity=".5">
-    <path d="M150 430h120"/><path d="M110 520h150"/><path d="M170 610h90"/>
+  <g stroke="#fff" stroke-linecap="round" stroke-width="22" opacity=".45">
+    <path d="M20 560h60"/><path d="M10 620h70"/><path d="M30 680h50"/>
   </g>
+  <!-- obstacle (bloc) -->
+  <rect x="150" y="690" width="270" height="112" rx="18" fill="#F4E7B5" filter="url(#sh)"/>
+  <rect x="150" y="690" width="270" height="24" rx="12" fill="#fff" opacity=".6"/>
+  <!-- traceur : passement au-dessus du bloc, une main posée -->
+  <g filter="url(#sh)" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="54">
+    <path d="M250 536 L226 604"/>
+    <path d="M252 552 L284 618 L298 676"/>
+    <path d="M244 548 L190 512 L140 528"/>
+    <path d="M226 604 L318 566 L410 548"/>
+    <path d="M226 604 L316 604 L402 598"/>
+  </g>
+  <circle cx="266" cy="474" r="48" fill="#fff" filter="url(#sh)"/>
   <!-- joueur en suspension qui arme un tir -->
-  <g transform="translate(20 50)"><g filter="url(#sh)" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="72">
-    <path d="M548 392 L468 598"/>                       <!-- buste -->
-    <path d="M540 410 L650 350 L716 238"/>               <!-- bras lanceur -->
-    <path d="M530 430 L430 450 L372 530"/>               <!-- bras équilibre -->
-    <path d="M468 598 L584 676 L552 800"/>               <!-- jambe d'appel -->
-    <path d="M468 598 L372 706 L276 668"/>               <!-- jambe arrière -->
+  <g transform="translate(345 70) scale(.74)"><g filter="url(#sh)" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="72">
+    <path d="M548 392 L468 598"/>
+    <path d="M540 410 L650 350 L716 238"/>
+    <path d="M530 430 L430 450 L372 530"/>
+    <path d="M468 598 L584 676 L552 800"/>
+    <path d="M468 598 L372 706 L276 668"/>
   </g>
   <circle cx="584" cy="296" r="68" fill="#fff" filter="url(#sh)"/>
-  <!-- ballon -->
   <g filter="url(#sh)">
     <circle cx="752" cy="170" r="76" fill="url(#ball)"/>
     <g fill="none" stroke="#8E6F1C" stroke-width="9" stroke-linecap="round" opacity=".7">

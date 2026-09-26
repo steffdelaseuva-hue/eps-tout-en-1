@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Outil « Test VMA »
+   EPS ONE — Outil « Test VMA »
    Luc Léger (navette 20 m) · VAMEVAL · 45-15 (Gacon) · Astrand (3 min)
    ========================================================= */
 ICONS.testvma = '<path d="M3.5 17a8.5 8.5 0 1 1 17 0"/><path d="M12 17l3.5-6"/><circle cx="12" cy="17" r="1.3"/><path d="M18.5 3.5c1 .8 1.5 1.8 1.5 3M20.5 1.8c1.5 1.2 2.2 2.8 2.2 4.7"/>';

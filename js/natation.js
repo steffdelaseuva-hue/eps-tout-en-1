@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Outil « Natation »
+   EPS ONE — Outil « Natation »
    Distance nagée · temps de nage · nombre de coups de bras
    ========================================================= */
 DB.natation = DB.natation || [];

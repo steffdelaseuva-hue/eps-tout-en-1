@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — jeu d'icônes original (SVG, trait or → bleu)
+   EPS ONE — jeu d'icônes original (SVG, trait or → bleu)
    ico(nom, classe?) -> <svg>…</svg>
    ========================================================= */
 const ICONS = {

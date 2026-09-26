@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Outil « Combiné athlétique »
+   EPS ONE — Outil « Combiné athlétique »
    Duathlon (course + lancer) / Triathlon (course + saut + lancer)
    Individuel ou groupes · course à distance ou à durée · tours/plots ·
    conversions · essais de saut et de lancer · cumuls

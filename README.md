@@ -1,4 +1,4 @@
-# EPS Tout en 1 — by Steff64
+# EPS ONE — by Steff64
 
 Boîte à outils web pour l'EPS (dégradé or → bleu, onglet OUTILS).
 

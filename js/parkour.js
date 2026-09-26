@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Outil « Parkour »
+   EPS ONE — Outil « Parkour »
    Exercices, niveaux et critères repris de l'application
    « Parkour EPS – Arzacq » (Stéphane Bardyn)
    Niveau 1 (6e) : atelier · niveau 1-4 · élément · maîtrise

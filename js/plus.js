@@ -1,10 +1,11 @@
 /* =========================================================
-   EPS Tout en 1 — Onglet PLUS : mise à jour, partage,
+   EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '2.8';
+const APP_VERSION = '2.9';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-tout-en-1/';
 const CHANGELOG = [
+  { v: '2.9', items: ['Nouveau nom : EPS ONE', 'Nouvelle icône : joueur + traceur'] },
   { v: '2.8', items: ['Grilles d\'évaluation : par points ou par compétences, niveaux personnalisés, descripteurs, import CSV / Excel (iDoceo, tableur) et modèles'] },
   { v: '2.7', items: ['Duathlon : points de lancers avec boutons + / −'] },
   { v: '2.6', items: ['Parkour : ateliers, éléments, niveaux et critères de validation repris de l\'appli Parkour EPS – Arzacq'] },
@@ -29,7 +30,7 @@ const CHANGELOG = [
   { v: '0.7', items: ['Couleur or (au lieu de jaune)', 'Menu Plus : Partager l\'app, Confidentialité & RGPD, À propos, Mise à jour, Nouvelle année scolaire'] },
   { v: '0.6', items: ['Nouvelles icônes originales', 'Logo Chronos EPS sur son outil'] },
   { v: '0.4', items: ['Onglet Plus : mise à jour, partage par QR code, à propos, confidentialité & RGPD', 'Nouvelle année scolaire (sauvegarde + remise à zéro choisie)'] },
-  { v: '0.3', items: ['Nouveau nom : EPS Tout en 1, by Steff64'] },
+  { v: '0.3', items: ['Nouveau nom : EPS ONE, by Steff64'] },
   { v: '0.2', items: ['Tous les outils disponibles (vidéo différée, photo-finish, grilles, suivi…)', 'Chronos EPS (12 élèves) intégré'] },
   { v: '0.1', items: ['Première version : accueil, onglet OUTILS, favoris'] },
 ];
@@ -97,10 +98,10 @@ function openUpdate() {
 function openShare() {
   const url = appLink();
   openPanel('Partager l\'app', el => {
-    el.innerHTML = `<div class="card qr-box"><h3>EPS Tout en 1</h3>${QR.svg(url)}<div class="muted" style="word-break:break-all">${esc(url)}</div>
+    el.innerHTML = `<div class="card qr-box"><h3>EPS ONE</h3>${QR.svg(url)}<div class="muted" style="word-break:break-all">${esc(url)}</div>
         <div class="row" style="width:100%;margin-top:6px"><button class="btn btn-grad" id="sh">📤 Partager</button><button class="btn btn-ghost" id="cp">📋 Copier le lien</button></div></div>`;
     const copy = async t => { try { await navigator.clipboard.writeText(t); toast('Copié ✔'); } catch (e) { prompt('Copiez :', t); } };
-    el.querySelector('#sh').onclick = async () => { if (navigator.share) { try { await navigator.share({ title: 'EPS Tout en 1', url }); } catch (e) {} } else copy(url); };
+    el.querySelector('#sh').onclick = async () => { if (navigator.share) { try { await navigator.share({ title: 'EPS ONE', url }); } catch (e) {} } else copy(url); };
     el.querySelector('#cp').onclick = () => copy(url);
   });
 }
@@ -108,8 +109,8 @@ function openShare() {
 /* ---------- ℹ️ À propos ---------- */
 function openAbout() {
   openPanel('À propos', el => {
-    el.innerHTML = `<div class="hero" style="text-align:center"><img class="logo" src="icons/icone-v2-192.png" alt="" style="margin:0 auto 10px;width:72px;height:72px;border-radius:18px">
-        <h2>EPS Tout en 1</h2><p style="margin:6px auto 0">by <b>Steff64</b> · version ${APP_VERSION}</p></div>
+    el.innerHTML = `<div class="hero" style="text-align:center"><img class="logo" src="icons/icone-v3-192.png" alt="" style="margin:0 auto 10px;width:72px;height:72px;border-radius:18px">
+        <h2>EPS ONE</h2><p style="margin:6px auto 0">by <b>Steff64</b> · version ${APP_VERSION}</p></div>
       <div class="card doc" style="margin-top:14px">
         <h3>🎯 L'objectif</h3>
         <p>Réunir dans une seule application les outils numériques utiles en cours d'EPS : chronométrer, minuter, former des équipes, gérer un tournoi, évaluer et suivre les élèves, sur tablette, téléphone ou ordinateur.</p>
@@ -192,7 +193,7 @@ function openNewYear(back) {
         <button class="btn btn-grad btn-block" style="margin-top:12px" id="go">🚀 Démarrer l'année</button></div>`;
     const $ = s => el.querySelector(s), opt = k => $(`[data-k="${k}"]`).checked;
     $('#bk').onclick = () => {
-      download(`eps-tout-en-1-sauvegarde-${DB.annee}.json`, JSON.stringify({ ...DB, exportDate: new Date().toISOString() }, null, 2), 'application/json');
+      download(`eps-one-sauvegarde-${DB.annee}.json`, JSON.stringify({ ...DB, exportDate: new Date().toISOString() }, null, 2), 'application/json');
       saved = true; $('#bks').textContent = '✔ Sauvegarde téléchargée'; };
     $('#go').onclick = () => {
       const ny = $('#ny').value.trim() || next;
@@ -258,7 +259,7 @@ function renderPlus() {
       ${item('calendar', 'gold', 'Nouvelle année scolaire', `Année en cours : ${esc(DB.annee)} · archiver ou repartir à zéro`, 'openNewYear()')}
       ${item('trash', 'navy', '<span style="color:var(--danger)">Tout effacer</span>', 'Supprime toutes les données de cet appareil', 'resetAll()')}
     </div>
-    <p class="muted" style="text-align:center;margin:22px 0 6px">EPS Tout en 1 · v${APP_VERSION} · by <b>Steff64</b></p>`;
+    <p class="muted" style="text-align:center;margin:22px 0 6px">EPS ONE · v${APP_VERSION} · by <b>Steff64</b></p>`;
 }
 const renderPlusYear = renderPlus;
 

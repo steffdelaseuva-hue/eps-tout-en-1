@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Mes classes : import CSV / Excel + ajout d'élève
+   EPS ONE — Mes classes : import CSV / Excel + ajout d'élève
    Lecture hors ligne : .csv, .txt, .xlsx (Excel), .xls (export HTML)
    ========================================================= */
 

@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Outil « Crosstraining / HYROX »
+   EPS ONE — Outil « Crosstraining / HYROX »
    Épreuves (blocs, séries, familles, exercices N1-N4, run) ·
    Séance (groupes duo/trio/quatuor, time cap, temps réalisé, écart) ·
    Résultats

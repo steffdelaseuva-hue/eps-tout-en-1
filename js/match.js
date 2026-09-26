@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Outil « Gestion de match »
+   EPS ONE — Outil « Gestion de match »
    Sports collectifs & raquettes : terrain, chrono, score, bonus,
    zones de progression, statistiques, historique
    ========================================================= */

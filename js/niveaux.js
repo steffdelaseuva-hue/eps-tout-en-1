@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Niveaux de jeu & composition d'équipes
+   EPS ONE — Niveaux de jeu & composition d'équipes
    (hétérogène / homogène) : Composition d'équipes, Championnat,
    Tournoi, Relais
    ========================================================= */

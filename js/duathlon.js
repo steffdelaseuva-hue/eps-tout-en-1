@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Outil « Duathlon athlétique »
+   EPS ONE — Outil « Duathlon athlétique »
    Groupes duo/trio/quatuor · 3 étapes · points de lancers ·
    tours · temps par étape + cumul · pénalités lancers / course
    ========================================================= */

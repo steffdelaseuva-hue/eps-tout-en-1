@@ -1,5 +1,5 @@
 /* =========================================================
-   Générateur de QR code autonome (hors ligne) — EPS Tout en 1
+   Générateur de QR code autonome (hors ligne) — EPS ONE
    Mode octet (UTF-8), correction M, versions 1 à 10.
    QR.matrix(texte) -> tableau de lignes de booléens
    QR.svg(texte, taille) -> chaîne SVG

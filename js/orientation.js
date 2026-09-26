@@ -1,5 +1,5 @@
 /* =========================================================
-   EPS Tout en 1 — Outil « Course d'orientation »
+   EPS ONE — Outil « Course d'orientation »
    Parcours (balises, niveaux, obligatoires) · Séance (départs,
    arrivées, balises, pénalités, RK) · Bilan cumulé
    ========================================================= */
