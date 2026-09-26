@@ -112,6 +112,7 @@ TOOL_IMPL.match = function (el) {
     clearInterval(iv); M = null;
     const sp = SP();
     el.innerHTML = `<div class="card"><h3>Sport</h3><div class="tog" id="sp">${Object.entries(SPORTS).map(([k, x]) => `<button data-s="${k}" class="${k === S.sport ? 'on' : ''}">${x.name}</button>`).join('')}</div></div>
+      ${S.sport === 'rugby' ? '<button class="btn btn-ghost btn-block" style="margin-top:12px" onclick="closeTool();openTool(\'rugbyla\')">🏉 Ligne d\'avantage : recueil individuel</button>' : ''}
       <div class="court" style="margin-top:12px;background:${courtSVG(S.sport).bg}"><svg viewBox="${courtSVG(S.sport).vb}">${courtSVG(S.sport).svg}</svg></div>
       <div class="card" style="margin-top:12px"><h3>Équipes</h3>
         <details id="mt-d" ${DB.classes.length && !DB.matchTeams ? 'open' : ''}><summary style="font-weight:800;cursor:pointer">👥 Constituer les équipes avec les élèves d'une classe</summary><div id="mt-host" style="margin-top:6px"></div></details>

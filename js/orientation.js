@@ -43,15 +43,31 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .co-times input{padding:8px}
 </style>`);
 
+/* Lecture d'un carton : couples « numéro code » puis présence des codes seuls */
+function coReadCodes(text, balises) {
+  const tok = String(text).toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim().split(' ').filter(Boolean), out = {};
+  const B = balises.filter(b => b.code), nums = new Set(balises.map(b => String(b.num)));
+  const isCode = t => !nums.has(t);
+  // 1) couples « numéro code » sur une même ligne
+  tok.forEach((t, i) => { const b = B.find(x => String(x.num) === t); if (b && tok[i + 1] && isCode(tok[i + 1]) && !(b.num in out)) out[b.num] = tok[i + 1]; });
+  // 2) colonnes : les numéros d'abord, puis les codes dans le même ordre
+  const pos = tok.map((t, i) => nums.has(t) ? i : -1).filter(i => i >= 0);
+  if (pos.length > 1) { const seq = pos.map(i => tok[i]), after = tok.slice(pos[pos.length - 1] + 1).filter(isCode);
+    if (after.length >= seq.length) seq.forEach((n, k) => { const b = B.find(x => String(x.num) === n); if (b) out[b.num] = after[k]; }); }
+  // 3) sinon : présence du code attendu n'importe où
+  B.forEach(b => { if (!(b.num in out) && tok.includes(String(b.code).toUpperCase().replace(/\s+/g, ''))) out[b.num] = b.code; });
+  return out;
+}
+
 TOOL_IMPL.co = function (el) {
   let tab = DB.co.current ? 'seance' : 'parcours';
   const P = id => DB.co.parcours.find(p => p.id === id);
 
   function frame() {
-    el.innerHTML = `<div class="co-tabs">${[['parcours', '🗺 Parcours'], ['seance', '⏱ Séance'], ['bilan', '📊 Bilan']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div><div id="co-body"></div>`;
+    el.innerHTML = `<div class="co-tabs">${[['parcours', '🗺 Parcours'], ['seance', '⏱ Séance'], ['controle', '🔎 Contrôle'], ['bilan', '📊 Bilan']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div><div id="co-body"></div>`;
     el.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; frame(); });
     const body = el.querySelector('#co-body');
-    ({ parcours: listParcours, seance: seance, bilan: bilan })[tab](body);
+    ({ parcours: listParcours, seance: seance, controle: controle, bilan: bilan })[tab](body);
   }
 
   /* ================= 1. PARCOURS ================= */
@@ -80,9 +96,11 @@ TOOL_IMPL.co = function (el) {
         ${p.denivOn ? `<label>Dénivelé positif (m)</label><input id="dv" type="number" value="${p.deniv}">` : ''}
       </div>
       <div class="card" style="margin-top:12px"><h3>Balises (${p.balises.length})</h3>
+        <p class="muted" style="margin:0 0 6px;font-size:.8rem">Code : le code inscrit sur la balise (ou sa pince), utilisé par l'onglet 🔎 Contrôle pour vérifier les cartons.</p>
         <div class="row" style="align-items:end"><div><label>Nombre</label><input id="nb" type="number" min="1" value="${p.balises.length}"></div><div><label>1er numéro</label><input id="n0" type="number" value="${p.balises[0]?.num ?? 31}"></div><button class="btn btn-ghost" style="flex:0 0 auto" id="genb">Générer</button></div>
         <div class="row" style="margin-top:8px"><button class="btn btn-ghost" id="allob">Toutes obligatoires</button><button class="btn btn-ghost" id="allfa">Toutes facultatives</button></div>
         <div style="margin-top:8px">${p.balises.map((b, i) => `<div class="bal-row"><input class="num" type="number" data-num="${i}" value="${b.num}">
+          <input class="num" data-code="${i}" value="${esc(b.code || '')}" placeholder="Code" style="text-transform:uppercase" maxlength="6">
           <div class="lvl">${[1, 2, 3].map(l => `<button data-niv="${i}" data-l="${l}" class="${b.niv === l ? 'on' : ''}">Niv ${l}</button>`).join('')}</div>
           <label class="chk-ob"><input type="checkbox" data-ob="${i}" ${b.ob ? 'checked' : ''}>oblig.</label><button class="btn btn-ghost" style="padding:6px 9px" data-rm="${i}">✕</button></div>`).join('')}</div>
         <button class="btn btn-ghost btn-block" style="margin-top:8px" id="addb">＋ Ajouter une balise</button></div>
@@ -96,7 +114,8 @@ TOOL_IMPL.co = function (el) {
       const read = () => { p.nom = $('#nm').value.trim() || 'Parcours'; p.distance = +$('#di').value || 0; p.alloue = +$('#al').value || 0; p.ecart = +$('#ec').value || 0;
         p.denivOn = $('#dn').checked; if ($('#dv')) p.deniv = +$('#dv').value || 0;
         p.pts = [+$('#p1').value || 0, +$('#p2').value || 0, +$('#p3').value || 0]; p.penWrongP = +$('#pwp').value || 0; p.penWrongS = +$('#pws').value || 0; p.penMissS = +$('#pms').value || 0; p.penOverP = +$('#pop').value || 0;
-        box.querySelectorAll('[data-num]').forEach(i => p.balises[+i.dataset.num].num = +i.value || 0); };
+        box.querySelectorAll('[data-num]').forEach(i => p.balises[+i.dataset.num].num = +i.value || 0);
+        box.querySelectorAll('[data-code]').forEach(i => p.balises[+i.dataset.code].code = i.value.trim().toUpperCase()); };
       $('#ty').onchange = () => { read(); p.type = $('#ty').value; if (p.type === 'reseau') p.balises.forEach(b => b.ob = false); draw(); };
       $('#dn').onchange = () => { read(); draw(); };
       $('#genb').onclick = () => { read(); const n = Math.max(1, +$('#nb').value || 1), n0 = +$('#n0').value || 31;
@@ -200,6 +219,61 @@ TOOL_IMPL.co = function (el) {
         mountComposer(who, { id: 'coc', modes: ['random', 'hetero', 'homo'], button: '▶ Former les groupes et préparer la séance',
           onTeams: teams => { const c = who.querySelector('#coc-cls')?.value || ''; launch(teams.map(t => ({ name: t.name.replace('Équipe', 'Groupe'), members: t.members.map(m => m.n), dep: null, arr: null, found: [], wrong: 0 })), c); } });
       }
+    };
+    draw();
+  }
+
+  /* ================= CONTRÔLE DES CARTONS ================= */
+  const CK = { pc: null, ans: {}, photo: null, run: '' };
+  function controle(box) {
+    const withCodes = DB.co.parcours.filter(p => p.balises.some(b => b.code));
+    if (!withCodes.length) { box.innerHTML = `<div class="card empty">Saisissez d'abord les <b>codes des balises</b> dans un parcours (onglet 🗺 Parcours → ✏️).</div>`; return; }
+    const cur = DB.co.current;
+    if (!withCodes.some(p => p.id === CK.pc)) CK.pc = cur && withCodes.some(p => p.id === cur.parcours) ? cur.parcours : withCodes[0].id;
+    const p = P(CK.pc), live = cur && cur.parcours === p.id ? cur : null;
+    const norm = v => String(v || '').toUpperCase().replace(/\s+/g, '');
+    const status = b => { const a = norm(CK.ans[b.num]); if (!a) return 0; return !b.code ? 0 : a === norm(b.code) ? 1 : -1; };
+    const draw = () => {
+      const st = p.balises.map(status), ok = st.filter(x => x === 1).length, ko = st.filter(x => x === -1).length;
+      box.innerHTML = `<div class="card"><label>Parcours</label><select id="kp">${withCodes.map(x => `<option value="${x.id}" ${x.id === p.id ? 'selected' : ''}>${esc(x.nom)}</option>`).join('')}</select>
+          ${live ? `<label>Participant (séance en cours)</label><select id="kr"><option value="">— Contrôle seul —</option>${live.runs.map((r, i) => `<option value="${i}" ${String(i) === CK.run ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select>` : ''}</div>
+        <div class="card" style="margin-top:12px"><h3>📷 Photo du carton de l'élève</h3>
+          ${CK.photo ? `<img src="${CK.photo}" id="kimg" style="width:100%;max-height:360px;object-fit:contain;border-radius:12px;background:#000;cursor:zoom-in">` : '<p class="muted" style="margin:0 0 8px">Facultatif : la photo s\'affiche ici pour recopier les codes plus facilement.</p>'}
+          <div class="row" style="margin-top:8px"><label class="btn btn-ghost" style="display:block;text-align:center;cursor:pointer;margin:0">📷 ${CK.photo ? 'Changer' : 'Prendre / choisir'}<input id="kf" type="file" accept="image/*" capture="environment" style="display:none"></label>
+            ${CK.photo ? '<button class="btn btn-grad" id="kocr">🔍 Lecture automatique (essai)</button>' : ''}</div>
+          ${CK.photo ? '<p class="muted" style="margin:8px 0 0;font-size:.78rem">La photo est analysée sur l\'appareil (rien n\'est envoyé). Lecture fiable surtout pour des codes écrits en majuscules bien lisibles : vérifiez toujours le résultat. Le module de lecture est téléchargé la 1re fois (connexion nécessaire).</p><div id="kmsg" class="muted" style="margin-top:6px;font-weight:700"></div>' : ''}</div>
+        <div class="card" style="margin-top:12px"><h3>Codes relevés par l'élève</h3>
+          <div class="sheet-table"><table><tr><th>Balise</th><th>Code relevé</th><th>Résultat</th></tr>
+          ${p.balises.map((b, i) => `<tr><td><b>${b.num}</b>${b.ob ? ' <span class="muted" style="font-size:.7rem">oblig.</span>' : ''}</td>
+            <td><input data-a="${b.num}" value="${esc(CK.ans[b.num] || '')}" style="text-transform:uppercase;padding:7px;max-width:120px" ${b.code ? '' : 'disabled placeholder="pas de code"'}></td>
+            <td data-s="${b.num}">${st[i] === 1 ? '<b style="color:#1B9E5A">✔ bon</b>' : st[i] === -1 ? `<b style="color:var(--danger)">✗ faux</b> <span class="muted">(${esc(b.code)})</span>` : '<span class="muted">—</span>'}</td></tr>`).join('')}</table></div>
+          <div class="result" style="margin-top:10px"><div class="card"><b id="kok">${ok}</b><small>bonnes</small></div><div class="card"><b id="kko">${ko}</b><small>fausses</small></div><div class="card"><b id="kvi">${p.balises.length - ok - ko}</b><small>non trouvées</small></div></div>
+          ${live ? `<button class="btn btn-grad btn-block" style="margin-top:12px" id="kap">✔ Reporter dans la séance</button>` : ''}
+          <button class="btn btn-ghost btn-block" style="margin-top:8px" id="kz">↺ Carton suivant</button></div>`;
+      const $ = s => box.querySelector(s);
+      $('#kp').onchange = e => { CK.pc = e.target.value; CK.ans = {}; CK.run = ''; controle(box); };
+      if ($('#kr')) $('#kr').onchange = e => { CK.run = e.target.value; };
+      if ($('#kimg')) $('#kimg').onclick = () => { const o = document.createElement('div'); o.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.92);display:grid;place-items:center;padding:12px'; o.innerHTML = `<img src="${CK.photo}" style="max-width:100%;max-height:100%;object-fit:contain">`; o.onclick = () => o.remove(); document.body.appendChild(o); };
+      $('#kf').onchange = e => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f), img = new Image();
+        img.onload = () => { const r = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = img.width * r; c.height = img.height * r; c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); CK.photo = c.toDataURL('image/jpeg', .85); draw(); };
+        img.src = url; };
+      box.querySelectorAll('[data-a]').forEach(i => i.oninput = () => { CK.ans[i.dataset.a] = i.value; const b = p.balises.find(x => String(x.num) === i.dataset.a), s2 = status(b);
+        box.querySelector(`[data-s="${i.dataset.a}"]`).innerHTML = s2 === 1 ? '<b style="color:#1B9E5A">✔ bon</b>' : s2 === -1 ? `<b style="color:var(--danger)">✗ faux</b> <span class="muted">(${esc(b.code)})</span>` : '<span class="muted">—</span>';
+        const all = p.balises.map(status), o = all.filter(x => x === 1).length, k = all.filter(x => x === -1).length; $('#kok').textContent = o; $('#kko').textContent = k; $('#kvi').textContent = p.balises.length - o - k; });
+      if ($('#kocr')) $('#kocr').onclick = async () => { const m = $('#kmsg'); try {
+          m.textContent = 'Chargement du module de lecture…';
+          if (!window.Tesseract) await new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; sc.onload = ok; sc.onerror = () => ko(new Error('Module de lecture indisponible (hors ligne ?)')); document.head.appendChild(sc); });
+          m.textContent = 'Lecture de la photo…';
+          const w = await Tesseract.createWorker('eng'); await w.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:-=. ' });
+          const { data } = await w.recognize(CK.photo); await w.terminate();
+          const n = coReadCodes(data.text || '', p.balises); let filled = 0;
+          Object.entries(n).forEach(([num, code]) => { if (!norm(CK.ans[num])) { CK.ans[num] = code; filled++; } });
+          draw(); box.querySelector('#kmsg').textContent = filled ? `${filled} code(s) reconnu(s) : vérifiez-les.` : 'Aucun code reconnu : saisissez-les à la main.';
+        } catch (er) { m.textContent = er.message || 'Lecture impossible'; } };
+      if ($('#kap')) $('#kap').onclick = () => { if (CK.run === '') return toast('Choisissez le participant'); const r = live.runs[+CK.run];
+        r.found = p.balises.filter(b => status(b) === 1).map(b => b.num); r.wrong = p.balises.filter(b => status(b) === -1).length; save();
+        toast(`${r.name} : ${r.found.length} balise(s) ✔`); CK.ans = {}; CK.photo = null; CK.run = String(Math.min(+CK.run + 1, live.runs.length - 1)); draw(); };
+      $('#kz').onclick = () => { CK.ans = {}; CK.photo = null; draw(); };
     };
     draw();
   }

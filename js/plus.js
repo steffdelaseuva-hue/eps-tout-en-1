@@ -2,9 +2,10 @@
    EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '4.1';
+const APP_VERSION = '4.2';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-one/';
 const CHANGELOG = [
+  { v: '4.2', items: ['Escalade : défis entre élèves (poses de pieds, PME, temps) avec cumul sur les voies de la séance', 'Course d’orientation : codes des balises + contrôle des cartons (lecture automatique de la photo en essai)', 'Nouvel outil Acrosport : banque de pyramides filtrable', 'Natation : Nager vite (indice de nage sur 25 m) / Savoir nager (test)', 'Nouvel outil Rugby · Ligne d’avantage'] },
   { v: '4.1', items: ['Gestion de match : constitution des équipes avec les élèves d’une classe (aléatoire, hétérogène, homogène), déplacement d’un élève d’une équipe à l’autre, joueurs enregistrés avec le match'] },
   { v: '4.0', items: ['Nouvel outil Escalade : voies 3a → 6c avec photo, moulinette / tête, observables (poses de pieds, temps, fluidité, PME), vidéo différée intégrée'] },
   { v: '3.9', items: ['Confidentialité : conseil Safari / Chrome / icône installée'] },

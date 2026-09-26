@@ -256,7 +256,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
    ========================================================= */
 const CATS=[
   {id:'perf',   name:'Activités de performance', desc:'Athlétisme, natation, musculation'},
-  {id:'art',    name:'Activités gymniques & artistiques', desc:'Parkour · gym, acrosport, cirque, danse à venir'},
+  {id:'art',    name:'Activités gymniques & artistiques', desc:'Parkour, acrosport · gym, cirque, danse à venir'},
   {id:'duel',   name:'Activités de duel', desc:'Sports collectifs, raquettes, combats'},
   {id:'appn',   name:'APPN', desc:'Course d\'orientation, escalade · sauvetage à venir'},
   {id:'temps',  name:'Chronos & timers',   desc:'Outils transversaux'},
@@ -264,7 +264,7 @@ const CATS=[
   {id:'eval',   name:'Évaluation & suivi', desc:'Résultats, grilles, suivi'},
 ];
 const TOOLS=[
-  {id:'natation', cat:'perf', name:'Natation', desc:'Distance, temps, coups de bras', ready:true},
+  {id:'natation', cat:'perf', name:'Natation', desc:'Nager vite (indice de nage) · Savoir nager (test)', ready:true},
   {id:'testvma',  cat:'perf', name:'Test VMA', desc:'Luc Léger, VAMEVAL, 45-15, Astrand', ready:true},
   {id:'vma',      cat:'perf',name:'VMA & allures',      desc:'Temps de passage selon % VMA', ready:true},
   {id:'vitesse',  cat:'perf',name:'Vitesse de course',  desc:'Distance + temps → km/h', ready:true},
@@ -276,9 +276,11 @@ const TOOLS=[
   {id:'rm',       cat:'perf', name:'Calcul 1RM',         desc:'Charge max + % de travail', ready:true},
   {id:'journal',  cat:'perf', name:'Journal de musculation',desc:'Carnet d\'entraînement élève', ready:true},
 
+  {id:'acrosport',cat:'art', name:'Acrosport', desc:'Banque de pyramides · duo, trio, quatuor · porteurs, hauteur, appuis', ready:true},
   {id:'parkour',  cat:'art', name:'Parkour', desc:'Sauter, franchir, tourner, freerun · maîtrise', ready:true},
 
   {id:'match',    cat:'duel', name:'Gestion de match', desc:'Terrain, score, bonus, zones, statistiques', ready:true},
+  {id:'rugbyla',  cat:'duel', name:'Rugby · Ligne d\'avantage', desc:'Recule / avance en attaque, bloque en défense · bonus', ready:true},
   {id:'marque',   cat:'duel', name:'Table de marque',    desc:'Score 2 équipes + chrono', ready:true},
   {id:'poule',    cat:'duel', name:'Championnat (poule)',desc:'Rencontres + classement', ready:true},
   {id:'tournoi',  cat:'duel', name:'Tournoi à élimination',desc:'Tableau à élimination directe', ready:true},
@@ -658,6 +660,8 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
 <script src="js/parkour.js"></script>
 <script src="js/duathlon.js"></script>
 <script src="js/escalade.js"></script>
+<script src="js/acrosport.js"></script>
+<script src="js/rugby-la.js"></script>
 <script src="js/combine.js"></script>
 <script src="js/sauvegardes.js"></script>
 <script src="js/grilles.js"></script>

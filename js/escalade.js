@@ -8,6 +8,7 @@
    légères à synchroniser.
    ========================================================= */
 DB.escalade = DB.escalade || { voies: [], passages: [] };
+DB.escalade.defis = DB.escalade.defis || [];
 ICONS.escalade = '<path d="M5 21 8 3h11l-2 18z"/><circle cx="11" cy="7" r="1.1"/><circle cx="15" cy="10" r="1.1"/><circle cx="10.5" cy="13" r="1.1"/><circle cx="14" cy="17" r="1.1"/><path d="M12.5 9.5l1.5 3.5-2 2.5M14 13l-3 .5"/>';
 
 const ESC_COT = ['3a', '3b', '3c', '4a', '4b', '4c', '5a', '5a+', '5b', '5b+', '5c', '5c+', '6a', '6a+', '6b', '6b+', '6c'];
@@ -37,13 +38,16 @@ TOOL_IMPL.escalade = function (el) {
   const P = { cls: DB.lastClass || (DB.classes[0] || {}).name || '', si: 0, voie: E.lastVoie || '', mode: E.lastMode || 'moul', pieds: 0, pme: 0, flu: 0, t0: null, acc: 0, run: false };
   const sec = () => P.acc + (P.run ? (performance.now() - P.t0) / 1000 : 0);
   let iv = null;
+  // chronos du défi en cours (en mémoire)
+  const DC = [{ t0: 0, acc: 0, run: false }, { t0: 0, acc: 0, run: false }];
+  const dsec = k => DC[k].acc + (DC[k].run ? (performance.now() - DC[k].t0) / 1000 : 0);
 
   function frame() {
     if (sub) { try { sub(); } catch (e) {} sub = null; }
-    el.innerHTML = `<div class="co-tabs">${[['voies', '🧗 Voies'], ['passage', '📋 Passage'], ['video', '🎥 Vidéo'], ['resultats', '📊 Résultats']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div><div id="e-body"></div>`;
+    el.innerHTML = `<div class="co-tabs">${[['voies', '🧗 Voies'], ['passage', '📋 Passage'], ['defis', '⚔️ Défis'], ['video', '🎥 Vidéo'], ['resultats', '📊 Résultats']].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div><div id="e-body"></div>`;
     el.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; frame(); });
     const box = el.querySelector('#e-body');
-    ({ voies, passage, video, resultats })[tab](box);
+    ({ voies, passage, defis, video, resultats })[tab](box);
   }
 
   /* ---------- 1/ Voies ---------- */
@@ -139,6 +143,83 @@ TOOL_IMPL.escalade = function (el) {
   const rowsTable = (rows, del) => `<table><tr><th>Élève</th><th>Date</th><th>Voie</th><th>Mode</th><th>Temps</th><th>Pieds</th><th>PME</th><th>Fluidité</th>${del ? '<th></th>' : ''}</tr>
     ${rows.map(r => `<tr><td><b>${esc(r.eleve)}</b></td><td>${new Date(r.date).toLocaleDateString('fr-FR')}</td><td>${escBadge(r.cot)} ${esc(r.voieNom)}</td><td>${ESC_MODES[r.mode]}</td><td>${escTime(r.temps)}</td><td>${r.pieds}</td><td>${r.pme}</td><td>${r.flu ? r.flu + ' · ' + ESC_FLU[r.flu] : '–'}</td>${del ? `<td><button class="btn btn-ghost" style="padding:4px 8px" data-x="${r.id}">✕</button></td>` : ''}</tr>`).join('')}</table>`;
 
+  /* ---------- Défis entre élèves ---------- */
+  const CRIT = { pieds: 'Poses de pieds', pme: 'PME', temps: 'Temps' };
+  const duelTotals = D => { const t = [0, 1].map(k => ({ pieds: 0, pme: 0, temps: 0, pts: 0 }));
+    D.manches.forEach(m => { [0, 1].forEach(k => { t[k].pieds += m.r[k].pieds; t[k].pme += m.r[k].pme; t[k].temps += m.r[k].temps || 0; });
+      const w = manchePts(D, m); t[0].pts += w[0]; t[1].pts += w[1]; });
+    t.forEach(x => x.temps = Math.round(x.temps * 10) / 10);
+    const crit = Object.keys(CRIT).filter(c => D.crit[c]).map(c => ({ c, win: t[0][c] === t[1][c] ? -1 : t[0][c] < t[1][c] ? 0 : 1 }));
+    const won = [0, 1].map(k => crit.filter(x => x.win === k).length);
+    return { t, crit, won, winner: won[0] === won[1] ? -1 : won[0] > won[1] ? 0 : 1 }; };
+  // 1 point par critère gagné sur la voie (le plus petit l'emporte)
+  const manchePts = (D, m) => { const p = [0, 0]; Object.keys(CRIT).filter(c => D.crit[c]).forEach(c => { const a = m.r[0][c] || 0, b = m.r[1][c] || 0; if (a < b) p[0]++; else if (b < a) p[1]++; }); return p; };
+  const duelTable = D => { const T = duelTotals(D), nm = D.eleves, cr = Object.keys(CRIT).filter(c => D.crit[c]);
+    const val = (r, c) => c === 'temps' ? escTime(r.temps) : r[c];
+    return `<div class="card sheet-table"><table><tr><th>Voie</th>${cr.map(c => `<th colspan="2">${CRIT[c]}</th>`).join('')}<th colspan="2">Points</th></tr>
+      <tr><th></th>${cr.map(() => `<th style="color:#B8912A">${esc(nm[0])}</th><th style="color:#1E5BD8">${esc(nm[1])}</th>`).join('')}<th style="color:#B8912A">${esc(nm[0])}</th><th style="color:#1E5BD8">${esc(nm[1])}</th></tr>
+      ${D.manches.map(m => { const p = manchePts(D, m); return `<tr><td>${escBadge(m.cot)} ${esc(m.voieNom)}</td>${cr.map(c => { const a = m.r[0][c] || 0, b = m.r[1][c] || 0; return `<td style="${a < b ? 'font-weight:900' : ''}">${val(m.r[0], c)}</td><td style="${b < a ? 'font-weight:900' : ''}">${val(m.r[1], c)}</td>`; }).join('')}<td><b>${p[0]}</b></td><td><b>${p[1]}</b></td></tr>`; }).join('')}
+      <tr style="border-top:2px solid var(--text)"><td><b>Cumul (${D.manches.length} voie${D.manches.length > 1 ? 's' : ''})</b></td>${cr.map(c => `<td><b>${val(T.t[0], c)}</b></td><td><b>${val(T.t[1], c)}</b></td>`).join('')}<td><b>${T.t[0].pts}</b></td><td><b>${T.t[1].pts}</b></td></tr></table>
+      <p class="muted" style="font-size:.78rem;margin:6px 0 0">Sur chaque critère, le plus petit total l'emporte. Vainqueur du défi : le plus de critères gagnés sur le cumul.</p></div>`; };
+  const duelWinner = D => { const T = duelTotals(D); if (!D.manches.length) return ''; return `<div class="win" style="margin-top:12px">${T.winner < 0 ? 'Égalité' : '🏆 ' + esc(D.eleves[T.winner])} · critères gagnés ${T.won[0]} – ${T.won[1]}</div>`; };
+  function defis(box) {
+    if (!DB.classes.length) { box.innerHTML = noClassMsg; return; }
+    if (!E.voies.length) { box.innerHTML = '<div class="card empty">Créez d\'abord une voie dans l\'onglet <b>🧗 Voies</b>.</div>'; return; }
+    const D = E.defi;
+    if (!D) {
+      const cls = DB.classes.some(c => c.name === P.cls) ? P.cls : DB.classes[0].name, st = studentsOf(cls), c = E.lastCrit || { pieds: true, pme: true, temps: true };
+      box.innerHTML = `<div class="card"><h3>Nouveau défi entre élèves</h3>
+          <label>Classe</label><select id="dc">${DB.classes.map(x => `<option ${x.name === cls ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+          <div class="row"><div><label>Élève 1</label><select id="d0">${st.map((n, k) => `<option value="${k}">${esc(n)}</option>`).join('')}</select></div>
+            <div><label>Élève 2</label><select id="d1">${st.map((n, k) => `<option value="${k}" ${k === 1 ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div></div>
+          <label>Critères du défi (le plus petit l'emporte)</label>
+          ${Object.entries(CRIT).map(([k, l]) => `<label style="display:flex;gap:8px;align-items:center;margin:6px 0;color:var(--text);font-weight:600"><input type="checkbox" data-cr="${k}" ${c[k] ? 'checked' : ''} style="width:auto"> ${l}${k === 'temps' ? ' mis pour la voie' : ''}</label>`).join('')}
+          <button class="btn btn-grad btn-block" style="margin-top:12px" id="dgo">⚔️ Lancer le défi</button></div>
+        <div class="section-title"><h2>Défis enregistrés (${E.defis.length})</h2>${E.defis.length ? '<button class="link" id="dexp">Exporter CSV</button>' : ''}</div>
+        ${E.defis.slice().reverse().map(x => { const T = duelTotals(x); return `<details class="card" style="margin-top:8px"><summary style="cursor:pointer"><b>${esc(x.eleves[0])} vs ${esc(x.eleves[1])}</b> <span class="muted">· ${new Date(x.date).toLocaleDateString('fr-FR')} · ${x.manches.length} voie(s) · ${T.winner < 0 ? 'égalité' : '🏆 ' + esc(x.eleves[T.winner])}</span></summary>${duelTable(x)}<button class="btn btn-ghost" style="margin-top:8px" data-dx="${x.id}">🗑 Supprimer</button></details>`; }).join('') || '<div class="card empty">Aucun défi enregistré.</div>'}`;
+      const $ = s => box.querySelector(s);
+      $('#dc').onchange = e => { P.cls = e.target.value; defis(box); };
+      $('#dgo').onclick = () => { const a = +$('#d0').value, b = +$('#d1').value; if (a === b) return toast('Choisissez deux élèves différents');
+        const crit = {}; box.querySelectorAll('[data-cr]').forEach(x => crit[x.dataset.cr] = x.checked); if (!Object.values(crit).some(Boolean)) return toast('Choisissez au moins un critère');
+        E.lastCrit = crit; E.defi = { id: Date.now().toString(36), date: Date.now(), classe: cls, eleves: [st[a], st[b]], crit, manches: [], cur: { voie: E.lastVoie || E.voies[0].id, r: [{ pieds: 0, pme: 0 }, { pieds: 0, pme: 0 }] } };
+        DC.forEach(x => Object.assign(x, { t0: 0, acc: 0, run: false })); save(); defis(box); };
+      box.querySelectorAll('[data-dx]').forEach(b => b.onclick = () => { if (!confirm('Supprimer ce défi ?')) return; const i = E.defis.findIndex(x => x.id === b.dataset.dx); E.defis.splice(i, 1); save(); defis(box); });
+      if ($('#dexp')) $('#dexp').onclick = () => download(`defis-escalade-${new Date().toISOString().slice(0, 10)}.csv`, csv([['Date', 'Classe', 'Élève', 'Adversaire', 'Voie', 'Cotation', 'Poses de pieds', 'PME', 'Temps (s)', 'Points voie'],
+        ...E.defis.flatMap(x => x.manches.flatMap(m => { const p = manchePts(x, m); return [0, 1].map(k => [new Date(x.date).toLocaleDateString('fr-FR'), x.classe, x.eleves[k], x.eleves[1 - k], m.voieNom, m.cot, m.r[k].pieds, m.r[k].pme, m.r[k].temps != null ? String(m.r[k].temps).replace('.', ',') : '', p[k]]); })),
+        ...E.defis.flatMap(x => { const T = duelTotals(x); return [0, 1].map(k => [new Date(x.date).toLocaleDateString('fr-FR'), x.classe, x.eleves[k], x.eleves[1 - k], 'CUMUL', '', T.t[k].pieds, T.t[k].pme, String(T.t[k].temps).replace('.', ','), T.t[k].pts]); })]));
+      return;
+    }
+    if (!E.voies.some(w => w.id === D.cur.voie)) D.cur.voie = E.voies[0].id;
+    const V = E.voies.find(w => w.id === D.cur.voie), img = DB[escImgKey(V.id)], cr = D.crit;
+    const col = k => `<div class="card" style="border-top:5px solid ${k ? '#1E5BD8' : '#B8912A'};padding:12px">
+        <h3 style="margin:0 0 6px;color:${k ? '#1E5BD8' : '#B8912A'}">${esc(D.eleves[k])}</h3>
+        ${cr.temps ? `<div class="big" id="dt${k}" style="font-size:clamp(1.8rem,8vw,2.8rem)">${escTime(dsec(k))}</div>
+          <div class="row" style="gap:6px"><button class="btn btn-grad" style="padding:10px 6px" data-dg="${k}">${DC[k].run ? '⏹ Arrivée' : DC[k].acc ? '▶ Reprendre' : '▶ Départ'}</button><button class="btn btn-ghost" style="flex:0 0 44px;padding:10px 0" data-dr="${k}">↺</button></div>` : ''}
+        ${['pieds', 'pme'].filter(c => cr[c]).map(c => `<label>${CRIT[c]}</label><div class="row" style="align-items:center;gap:6px"><button class="btn btn-ghost" style="flex:0 0 44px;padding:12px 0" data-dm="${k}|${c}">−</button><b style="flex:0 0 40px;text-align:center;font-size:1.5rem" id="dn${k}${c}">${D.cur.r[k][c]}</b><button class="btn btn-grad" style="padding:12px 4px" data-dp="${k}|${c}">＋1</button></div>`).join('')}</div>`;
+    box.innerHTML = `<div class="card"><b>${esc(D.eleves[0])} ⚔️ ${esc(D.eleves[1])}</b><div class="muted">${esc(D.classe)} · ${Object.keys(CRIT).filter(c => cr[c]).map(c => CRIT[c]).join(', ')} · voie n° ${D.manches.length + 1}</div>
+        <label>Voie</label><select id="dv">${E.voies.map(w => `<option value="${w.id}" ${w.id === V.id ? 'selected' : ''}>${esc(w.cot)} — ${esc(w.nom)}</option>`).join('')}</select>
+        ${img ? `<img src="${img}" id="dimg" style="width:100%;max-height:160px;object-fit:contain;border-radius:12px;background:#000;margin-top:8px;cursor:zoom-in">` : ''}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">${col(0)}${col(1)}</div>
+      <button class="btn btn-grad btn-block" style="margin-top:12px" id="dval">✔ Valider cette voie</button>
+      ${D.manches.length ? `<div class="section-title"><h2>Cumul de la séance</h2></div>${duelTable(D)}${duelWinner(D)}` : ''}
+      <div class="row" style="margin-top:12px"><button class="btn btn-grad" id="dend">💾 Terminer et enregistrer le défi</button><button class="btn btn-ghost" id="dab">Abandonner</button></div>`;
+    const $ = s => box.querySelector(s), all = s => box.querySelectorAll(s);
+    $('#dv').onchange = e => { D.cur.voie = e.target.value; E.lastVoie = D.cur.voie; save(); defis(box); };
+    if ($('#dimg')) $('#dimg').onclick = () => zoom(V.id);
+    all('[data-dg]').forEach(b => b.onclick = () => { const k = +b.dataset.dg, c = DC[k]; if (c.run) { c.acc = dsec(k); c.run = false; beep(900, .2); } else { c.t0 = performance.now(); c.run = true; beep(1300, .3); } b.textContent = c.run ? '⏹ Arrivée' : '▶ Reprendre'; });
+    all('[data-dr]').forEach(b => b.onclick = () => { const k = +b.dataset.dr; Object.assign(DC[k], { acc: 0, run: false }); defis(box); });
+    all('[data-dp]').forEach(b => b.onclick = () => { const [k, c] = b.dataset.dp.split('|'); D.cur.r[k][c]++; $('#dn' + k + c).textContent = D.cur.r[k][c]; beep(1100, .03, .15); save(); });
+    all('[data-dm]').forEach(b => b.onclick = () => { const [k, c] = b.dataset.dm.split('|'); D.cur.r[k][c] = Math.max(0, D.cur.r[k][c] - 1); $('#dn' + k + c).textContent = D.cur.r[k][c]; save(); });
+    $('#dval').onclick = () => { if (cr.temps && DC.some(c => c.run)) return toast('Arrêtez d\'abord les chronos');
+      D.manches.push({ voie: V.id, voieNom: V.nom, cot: V.cot, r: [0, 1].map(k => ({ pieds: cr.pieds ? D.cur.r[k].pieds : 0, pme: cr.pme ? D.cur.r[k].pme : 0, temps: cr.temps ? Math.round(dsec(k) * 10) / 10 : 0 })) });
+      D.cur.r = [{ pieds: 0, pme: 0 }, { pieds: 0, pme: 0 }]; DC.forEach(x => Object.assign(x, { t0: 0, acc: 0, run: false })); save(); toast('Voie validée ✔'); defis(box); };
+    $('#dend').onclick = () => { if (!D.manches.length) return toast('Validez au moins une voie'); delete D.cur; E.defis.push(D); E.defi = null;
+      const T = duelTotals(D); [0, 1].forEach(k => saveResult({ tool: 'escalade', label: 'Défi escalade', classe: D.classe, eleve: D.eleves[k], valeur: `${T.winner < 0 ? 'égalité' : T.winner === k ? 'victoire' : 'défaite'} vs ${D.eleves[1 - k]}`,
+        detail: `${D.manches.length} voie(s) · ${D.crit.pieds ? T.t[k].pieds + ' poses de pieds · ' : ''}${D.crit.pme ? T.t[k].pme + ' PME · ' : ''}${D.crit.temps ? 'temps ' + escTime(T.t[k].temps) : ''}`.replace(/ · $/, '') }));
+      save(); toast('Défi enregistré ✔'); defis(box); };
+    $('#dab').onclick = () => { if (confirm('Abandonner ce défi ?')) { E.defi = null; save(); defis(box); } };
+  }
+
   /* ---------- 4/ Vidéo différée intégrée ---------- */
   function video(box) { sub = TOOL_IMPL.video(box) || null; }
 
@@ -164,6 +245,7 @@ TOOL_IMPL.escalade = function (el) {
   }
 
   frame();
-  iv = setInterval(() => { const t = el.querySelector('#tm'); if (t && P.run && tab === 'passage') t.textContent = escTime(sec()); }, 100);
+  iv = setInterval(() => { const t = el.querySelector('#tm'); if (t && P.run && tab === 'passage') t.textContent = escTime(sec());
+    if (tab === 'defis') [0, 1].forEach(k => { const e = el.querySelector('#dt' + k); if (e && DC[k].run) e.textContent = escTime(dsec(k)); }); }, 100);
   return () => { clearInterval(iv); if (sub) { try { sub(); } catch (e) {} } };
 };
