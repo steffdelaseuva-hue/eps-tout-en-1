@@ -2,9 +2,11 @@
    EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '3.6';
+const APP_VERSION = '3.8';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-one/';
 const CHANGELOG = [
+  { v: '3.8', items: ['Confidentialité : précision sur l’hébergement'] },
+  { v: '3.7', items: ['Confidentialité : mention du chiffrement de bout en bout'] },
   { v: '3.6', items: ['Connexion au compte : choix Combiner ou Remplacer les données de l’appareil'] },
   { v: '3.5', items: ['Chiffrement de bout en bout de la synchronisation (clé tirée du mot de passe)'] },
   { v: '3.4', items: ['Confidentialité : conseils reformulés'] },
@@ -150,14 +152,15 @@ function openPrivacy() {
         <p>Classes, listes d'élèves, évaluations, suivi, dispenses… sont enregistrés uniquement dans le navigateur de cet appareil (stockage local). Rien n'est envoyé sur un serveur, rien n'est partagé. Effacer les données de Safari/Chrome ou désinstaller l'app les supprime : pensez à exporter régulièrement une sauvegarde.</p>
         <h3>☁️ Mode « Compte e-mail » (synchronisation)</h3>
         <ul><li>Les données sont copiées dans une base de données <b>Google Firebase (Cloud Firestore)</b>, hébergée <b>en Europe (Paris, europe-west9)</b>, pour être retrouvées sur vos autres appareils.</li>
+          <li><b>Chiffrement de bout en bout</b> : les données sont chiffrées sur votre appareil avant l'envoi (AES-256), avec une clé tirée de votre mot de passe. Firebase ne stocke que du contenu illisible : <b>ni Google, ni l'administrateur du projet ne peuvent les lire</b>.</li>
           <li>Elles sont rattachées à votre compte : les règles de sécurité font que <b>seul votre compte peut les lire ou les modifier</b>.</li>
-          <li>L'adresse e-mail sert uniquement à la connexion. Le mot de passe est géré par Firebase Authentication et n'est jamais visible par l'app.</li>
+          <li>L'adresse e-mail sert uniquement à la connexion. Le mot de passe est géré par Firebase Authentication ; l'app ne le conserve pas, elle s'en sert seulement sur l'appareil pour créer la clé de chiffrement. En cas d'oubli, les données en ligne deviennent illisibles, mais celles de vos appareils sont conservées.</li>
           <li>Vous pouvez à tout moment <b>supprimer toutes vos données en ligne</b> (Plus → Stockage & synchronisation) : la synchronisation s'arrête et les données restent seulement sur l'appareil.</li>
           <li><b>Conseil</b> : en mode synchronisé, préférez <b>prénom + initiale</b> pour les élèves. Pour toute question sur l'usage d'outils numériques avec des données d'élèves, votre établissement reste l'interlocuteur de référence.</li></ul>
         <h3>📷 Caméra</h3>
         <p>La vidéo différée et le photo-finish utilisent la caméra uniquement pendant que l'outil est ouvert. Les images restent en mémoire vive, ne sont jamais enregistrées ni envoyées, et sont effacées à la fermeture de l'outil.</p>
         <h3>🌐 Hébergement</h3>
-        <p>L'application est hébergée sur GitHub Pages. Comme pour tout site web, l'hébergeur peut enregistrer des données techniques de connexion (adresse IP) lors du chargement de la page. Aucune donnée d'élève ne transite par ce biais (en mode synchronisé, elles transitent uniquement vers Firebase, de façon chiffrée).</p>
+        <p>L'application est hébergée sur GitHub Pages. Comme pour tout site web, l'hébergeur peut enregistrer des données techniques de connexion (adresse IP) lors du chargement de la page. Aucune donnée d'élève ne transite par ce biais (en mode synchronisé, elles transitent uniquement vers Firebase, chiffrées de bout en bout).</p>
         <h3>🧑‍🏫 Bonnes pratiques pour l'enseignant</h3>
         <ul><li><b>Minimiser</b> : prénom + initiale du nom suffisent le plus souvent.</li>
           <li><b>Dispenses</b> : ne pas saisir de motif médical ni de diagnostic, seulement les dates et les aménagements.</li>
