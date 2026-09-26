@@ -2,9 +2,10 @@
    EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '2.9';
-const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-tout-en-1/';
+const APP_VERSION = '3.0';
+const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-one/';
 const CHANGELOG = [
+  { v: '3.0', items: ['Nouvelle adresse : steffdelaseuva-hue.github.io/eps-one/'] },
   { v: '2.9', items: ['Nouveau nom : EPS ONE', 'Nouvelle icône : joueur + traceur'] },
   { v: '2.8', items: ['Grilles d\'évaluation : par points ou par compétences, niveaux personnalisés, descripteurs, import CSV / Excel (iDoceo, tableur) et modèles'] },
   { v: '2.7', items: ['Duathlon : points de lancers avec boutons + / −'] },
