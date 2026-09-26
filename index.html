@@ -258,7 +258,7 @@ const CATS=[
   {id:'perf',   name:'Activités de performance', desc:'Athlétisme, natation, musculation'},
   {id:'art',    name:'Activités gymniques & artistiques', desc:'Parkour · gym, acrosport, cirque, danse à venir'},
   {id:'duel',   name:'Activités de duel', desc:'Sports collectifs, raquettes, combats'},
-  {id:'appn',   name:'APPN', desc:'Course d\'orientation · escalade, sauvetage à venir'},
+  {id:'appn',   name:'APPN', desc:'Course d\'orientation, escalade · sauvetage à venir'},
   {id:'temps',  name:'Chronos & timers',   desc:'Outils transversaux'},
   {id:'classe', name:'Gestion de classe',  desc:'Classes, tirages, équipes'},
   {id:'eval',   name:'Évaluation & suivi', desc:'Résultats, grilles, suivi'},
@@ -285,6 +285,7 @@ const TOOLS=[
   {id:'pyramide', cat:'duel', name:'Pyramide des victoires',desc:'Montée / descente', ready:true},
 
   {id:'co',       cat:'appn', name:'Course d\'orientation', desc:'Parcours, balises, séances, RK, bilan', ready:true},
+  {id:'escalade', cat:'appn', name:'Escalade', desc:'Voies 3a-6c + photo · moulinette / tête · observables · vidéo', ready:true},
 
   {id:'chronos12',cat:'temps', name:'Chronos EPS (12 élèves)', desc:'Chrono central + 12 chronos numérotés', ready:true},
   {id:'chrono',   cat:'temps', name:'Chronomètre',        desc:'Chrono plein écran avec tours', ready:true},
@@ -656,6 +657,7 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
 <script src="js/crosstraining.js"></script>
 <script src="js/parkour.js"></script>
 <script src="js/duathlon.js"></script>
+<script src="js/escalade.js"></script>
 <script src="js/combine.js"></script>
 <script src="js/sauvegardes.js"></script>
 <script src="js/grilles.js"></script>
