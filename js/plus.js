@@ -2,9 +2,10 @@
    EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '3.8';
+const APP_VERSION = '3.9';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-one/';
 const CHANGELOG = [
+  { v: '3.9', items: ['Confidentialité : conseil Safari / Chrome / icône installée'] },
   { v: '3.8', items: ['Confidentialité : précision sur l’hébergement'] },
   { v: '3.7', items: ['Confidentialité : mention du chiffrement de bout en bout'] },
   { v: '3.6', items: ['Connexion au compte : choix Combiner ou Remplacer les données de l’appareil'] },
@@ -166,6 +167,7 @@ function openPrivacy() {
           <li><b>Dispenses</b> : ne pas saisir de motif médical ni de diagnostic, seulement les dates et les aménagements.</li>
           <li><b>Exports</b> (CSV, JSON) : les ranger dans un espace sécurisé (ENT, espace professionnel), pas sur une clé USB perdue ou un cloud personnel.</li>
           <li><b>Appareil</b> : verrouiller la tablette par un code, surtout si elle est partagée.</li>
+          <li><b>Toujours la même entrée</b> : sur iPhone/iPad, Safari, Chrome et l'icône installée sur l'écran d'accueil ne partagent pas les mêmes données. Utilisez toujours la même (de préférence l'icône installée). En mode « Compte e-mail », connectez-vous avec le même compte pour retrouver vos données partout.</li>
           <li><b>Durée</b> : effacer les données en fin d'année avec « Nouvelle année scolaire ».</li></ul>
         <p class="muted">Ces informations sont données à titre indicatif et ne constituent pas un avis juridique.</p>
       </div>
