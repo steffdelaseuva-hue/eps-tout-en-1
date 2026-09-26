@@ -101,6 +101,8 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .win{text-align:center;font-size:1.3rem;font-weight:900;padding:14px;border-radius:16px;background:var(--grad);color:#fff}
 </style>`);
 
+const RLA_BOX = '<details class="card" style="margin-top:12px"><summary style="font-weight:800;cursor:pointer">🏉 Ligne d\'avantage : recueil individuel (recule / avance / bloque)</summary><div id="rla-host" style="margin-top:10px"></div></details>';
+
 TOOL_IMPL.match = function (el) {
   let S = { sport: 'handball', a: 'Équipe A', b: 'Équipe B', type: 'temps', dur: 10, target: 21, ecart: true, bonus: [1, 2, 5], stats: true, zones: false, nz: 4, ia: 0, ib: 1 };
   let selPl = null;
@@ -112,7 +114,6 @@ TOOL_IMPL.match = function (el) {
     clearInterval(iv); M = null;
     const sp = SP();
     el.innerHTML = `<div class="card"><h3>Sport</h3><div class="tog" id="sp">${Object.entries(SPORTS).map(([k, x]) => `<button data-s="${k}" class="${k === S.sport ? 'on' : ''}">${x.name}</button>`).join('')}</div></div>
-      ${S.sport === 'rugby' ? '<button class="btn btn-ghost btn-block" style="margin-top:12px" onclick="closeTool();openTool(\'rugbyla\')">🏉 Ligne d\'avantage : recueil individuel</button>' : ''}
       <div class="court" style="margin-top:12px;background:${courtSVG(S.sport).bg}"><svg viewBox="${courtSVG(S.sport).vb}">${courtSVG(S.sport).svg}</svg></div>
       <div class="card" style="margin-top:12px"><h3>Équipes</h3>
         <details id="mt-d" ${DB.classes.length && !DB.matchTeams ? 'open' : ''}><summary style="font-weight:800;cursor:pointer">👥 Constituer les équipes avec les élèves d'une classe</summary><div id="mt-host" style="margin-top:6px"></div></details>
@@ -127,6 +128,7 @@ TOOL_IMPL.match = function (el) {
         ${sp.zones ? `<label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="zo" ${S.zones ? 'checked' : ''} style="width:auto"> Zones visées (progression du ballon sur le terrain)</label>
           <div id="nzw" style="display:${S.zones ? 'block' : 'none'}"><label>Nombre de zones dans la longueur</label><div class="tog" id="nz">${[3, 4, 5].map(n => `<button data-n="${n}" class="${S.nz === n ? 'on' : ''}">${n} zones</button>`).join('')}</div></div>` : ''}
       </div>
+      ${S.sport === 'rugby' ? RLA_BOX : ''}
       <button class="btn btn-grad btn-block" style="margin-top:14px;padding:16px;font-size:1.05rem" id="go">▶ Lancer le match</button>
       <div class="section-title"><h2>Historique des matchs</h2>${DB.matchs.length ? '<button class="link" id="hx">Exporter CSV</button>' : ''}</div>
       <div class="card" style="padding:0">${DB.matchs.length ? DB.matchs.slice().reverse().slice(0, 15).map((m, j) => { const i = DB.matchs.length - 1 - j;
@@ -142,12 +144,16 @@ TOOL_IMPL.match = function (el) {
     if ($('#zo')) $('#zo').onchange = () => $('#nzw').style.display = $('#zo').checked ? 'block' : 'none';
     $('#go').onclick = () => { keep(); start(); };
     wireTeams();
+    mountRLA();
     el.querySelectorAll('[data-x]').forEach(b => b.onclick = () => { if (confirm('Supprimer ce match de l\'historique ?')) { DB.matchs.splice(+b.dataset.x, 1); save(); setup(); } });
     el.querySelectorAll('[data-v]').forEach(b => b.onclick = () => summary(DB.matchs[+b.dataset.v], true));
     if ($('#hx')) $('#hx').onclick = () => download(`matchs-${new Date().toISOString().slice(0, 10)}.csv`, csv([
       ['Date', 'Sport', 'Équipe A', 'Score A', 'Score B', 'Équipe B', 'Tirs A', 'Marqués A', 'Pertes A', 'Passes déc. A', 'Bonus A', 'Tirs B', 'Marqués B', 'Pertes B', 'Passes déc. B', 'Bonus B', 'Joueurs A', 'Joueurs B'],
       ...DB.matchs.map(m => [new Date(m.date).toLocaleString('fr-FR'), SPORTS[m.sport]?.name || m.sport, m.a, m.sa, m.sb, m.b, ...[0, 1].flatMap(t => { const s = m.stats[t]; return [s.tirs, s.marques, s.pertes, s.passes, s.bonus]; }), (m.pa || []).join(', '), (m.pb || []).join(', ')])]));
   }
+
+  /* ----- Rugby : ligne d'avantage intégrée ----- */
+  const mountRLA = () => { const h = el.querySelector('#rla-host'); if (h && TOOL_IMPL.rugbyla) TOOL_IMPL.rugbyla(h); };
 
   /* ----- Équipes constituées avec les élèves ----- */
   const T = () => DB.matchTeams && DB.matchTeams.teams && DB.matchTeams.teams.length ? DB.matchTeams : null;
@@ -216,7 +222,8 @@ TOOL_IMPL.match = function (el) {
           ${sp.coll && S.stats ? `<button data-t="${t}" data-k="tir">🎯 Tir tenté<small>raté</small></button><button data-t="${t}" data-k="passe">🤝 Passe décisive</button><button data-t="${t}" data-k="perte">❌ Perte de balle</button>` : ''}
         </div>`).join('')}</div>
       <div class="row" style="margin-top:12px"><button class="btn btn-ghost" id="un">↶ Annuler la dernière action</button><button class="btn btn-danger" id="end">🏁 Fin du match</button></div>
-      <p class="muted" id="last" style="text-align:center;margin:8px 0"></p>`;
+      <p class="muted" id="last" style="text-align:center;margin:8px 0"></p>
+      ${S.sport === 'rugby' ? RLA_BOX : ''}`;
     const $ = s => el.querySelector(s);
     const setPoss = p => { M.poss = p; el.querySelectorAll('[data-p]').forEach(b => b.classList.toggle('on', +b.dataset.p === p)); paintZones(); };
     const add = e => { if (M.over) return; e.t = Math.round(now() / 1000); M.ev.push(e); paint(e); check(); };
@@ -233,6 +240,7 @@ TOOL_IMPL.match = function (el) {
     $('#un').onclick = () => { const e = M.ev.pop(); if (!e) return; if (M.over) M.over = false; paint(); $('#last').textContent = 'Annulé : ' + e.label + ' (' + (e.team ? S.b : S.a) + ')'; };
     $('#end').onclick = () => { if (confirm('Terminer le match ?')) finish(); };
     iv = setInterval(tick, 200); paint(); paintZones();
+    mountRLA();
   }
   function paintZones() {
     if (!el.querySelector('[data-zl]')) return;

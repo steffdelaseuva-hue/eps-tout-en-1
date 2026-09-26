@@ -43,20 +43,45 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .co-times input{padding:8px}
 </style>`);
 
-/* Lecture d'un carton : couples « numéro code » puis présence des codes seuls */
-function coReadCodes(text, balises) {
-  const tok = String(text).toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim().split(' ').filter(Boolean), out = {};
-  const B = balises.filter(b => b.code), nums = new Set(balises.map(b => String(b.num)));
-  const isCode = t => !nums.has(t);
-  // 1) couples « numéro code » sur une même ligne
-  tok.forEach((t, i) => { const b = B.find(x => String(x.num) === t); if (b && tok[i + 1] && isCode(tok[i + 1]) && !(b.num in out)) out[b.num] = tok[i + 1]; });
-  // 2) colonnes : les numéros d'abord, puis les codes dans le même ordre
-  const pos = tok.map((t, i) => nums.has(t) ? i : -1).filter(i => i >= 0);
-  if (pos.length > 1) { const seq = pos.map(i => tok[i]), after = tok.slice(pos[pos.length - 1] + 1).filter(isCode);
-    if (after.length >= seq.length) seq.forEach((n, k) => { const b = B.find(x => String(x.num) === n); if (b) out[b.num] = after[k]; }); }
-  // 3) sinon : présence du code attendu n'importe où
-  B.forEach(b => { if (!(b.num in out) && tok.includes(String(b.code).toUpperCase().replace(/\s+/g, ''))) out[b.num] = b.code; });
+/* ---------- Symboles de pinces : grille 4 × 4 de points (code = 16 caractères 0/1) ---------- */
+const PAT_N = 16;
+const isPat = c => typeof c === 'string' && /^[01]{16}$/.test(c) && c.includes('1');
+const CO_PATS = (() => {                       // répertoire de 50 symboles distincts
+  let seed = 20260926; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const out = [], dist = (a, b) => [...a].filter((x, i) => x !== b[i]).length;
+  while (out.length < 50) { const k = 4 + Math.floor(rnd() * 4), cells = new Set(); while (cells.size < k) cells.add(Math.floor(rnd() * PAT_N));
+    const c = Array.from({ length: PAT_N }, (_, i) => cells.has(i) ? '1' : '0').join('');
+    if (out.every(o => dist(o, c) >= 4)) out.push(c); }
   return out;
+})();
+function patSVG(code, px = 44, col = '#0B2A5B') {
+  const on = isPat(code) ? code : '0'.repeat(PAT_N);
+  return `<svg viewBox="0 0 44 44" width="${px}" height="${px}" style="display:block"><rect x="1" y="1" width="42" height="42" rx="5" fill="#fff" stroke="#9AA6B8" stroke-width="1.5"/>${[...on].map((v, i) => { const x = 8 + (i % 4) * 9.3, y = 8 + Math.floor(i / 4) * 9.3;
+    return v === '1' ? `<circle cx="${x}" cy="${y}" r="3.4" fill="${col}"/>` : `<circle cx="${x}" cy="${y}" r="1.1" fill="#D5DBE5"/>`; }).join('')}</svg>`;
+}
+/* Sélecteur de symbole : répertoire, dessin libre, options supplémentaires */
+function patPicker({ title, options, draw = true, extra = [], current, used = [], onPick }) {
+  const o = document.createElement('div');
+  o.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(7,18,42,.72);display:grid;place-items:center;padding:12px';
+  let tab = 'rep', cells = [...(isPat(current) ? current : '0'.repeat(PAT_N))];
+  const render = () => {
+    o.innerHTML = `<div class="card" style="max-width:520px;width:100%;max-height:92vh;overflow:auto"><h3>${esc(title)}</h3>
+      ${draw ? `<div class="co-tabs" style="margin-top:8px"><button data-t="rep" class="${tab === 'rep' ? 'on' : ''}">📚 Répertoire</button><button data-t="draw" class="${tab === 'draw' ? 'on' : ''}">✏️ Dessiner</button></div>` : ''}
+      ${tab === 'rep' ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px">${options.map(c => `<button data-c="${c}" style="padding:4px;border-radius:10px;border:2px solid ${c === current ? 'var(--gold)' : 'transparent'};background:${used.includes(c) && c !== current ? 'var(--line)' : 'transparent'};cursor:pointer;opacity:${used.includes(c) && c !== current ? .45 : 1}">${patSVG(c, 46)}</button>`).join('')}</div>
+          ${extra.map(x => `<button class="btn ${x.cls || 'btn-ghost'} btn-block" style="margin-top:8px" data-x="${x.v}">${x.l}</button>`).join('')}`
+        : `<p class="muted" style="margin:0 0 8px">Touchez les points pour reproduire le symbole de la pince.</p>
+          <div style="display:grid;grid-template-columns:repeat(4,56px);gap:8px;justify-content:center">${cells.map((v, i) => `<button data-i="${i}" style="width:56px;height:56px;border-radius:50%;border:2px solid var(--line);background:${v === '1' ? '#0B2A5B' : 'var(--card)'};cursor:pointer"></button>`).join('')}</div>
+          <button class="btn btn-grad btn-block" style="margin-top:12px" id="pv">✔ Utiliser ce symbole</button>`}
+      <button class="btn btn-ghost btn-block" style="margin-top:8px" id="pc">Annuler</button></div>`;
+    o.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { tab = b.dataset.t; render(); });
+    o.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { o.remove(); onPick(b.dataset.c); });
+    o.querySelectorAll('[data-x]').forEach(b => b.onclick = () => { o.remove(); onPick(b.dataset.x); });
+    o.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { cells[+b.dataset.i] = cells[+b.dataset.i] === '1' ? '0' : '1'; render(); });
+    const pv = o.querySelector('#pv'); if (pv) pv.onclick = () => { const c = cells.join(''); if (!isPat(c)) return toast('Ajoutez au moins un point'); o.remove(); onPick(c); };
+    o.querySelector('#pc').onclick = () => o.remove();
+  };
+  o.onclick = e => { if (e.target === o) o.remove(); };
+  render(); document.body.appendChild(o);
 }
 
 TOOL_IMPL.co = function (el) {
@@ -96,11 +121,12 @@ TOOL_IMPL.co = function (el) {
         ${p.denivOn ? `<label>Dénivelé positif (m)</label><input id="dv" type="number" value="${p.deniv}">` : ''}
       </div>
       <div class="card" style="margin-top:12px"><h3>Balises (${p.balises.length})</h3>
-        <p class="muted" style="margin:0 0 6px;font-size:.8rem">Code : le code inscrit sur la balise (ou sa pince), utilisé par l'onglet 🔎 Contrôle pour vérifier les cartons.</p>
+        <p class="muted" style="margin:0 0 6px;font-size:.8rem">Symbole : le motif de points de la pince de chaque balise (répertoire ou dessin), utilisé par l'onglet 🔎 Contrôle.</p>
+        <button class="btn btn-ghost btn-block" id="autop" style="margin-bottom:6px">🎲 Attribuer un symbole différent à chaque balise</button>
         <div class="row" style="align-items:end"><div><label>Nombre</label><input id="nb" type="number" min="1" value="${p.balises.length}"></div><div><label>1er numéro</label><input id="n0" type="number" value="${p.balises[0]?.num ?? 31}"></div><button class="btn btn-ghost" style="flex:0 0 auto" id="genb">Générer</button></div>
         <div class="row" style="margin-top:8px"><button class="btn btn-ghost" id="allob">Toutes obligatoires</button><button class="btn btn-ghost" id="allfa">Toutes facultatives</button></div>
         <div style="margin-top:8px">${p.balises.map((b, i) => `<div class="bal-row"><input class="num" type="number" data-num="${i}" value="${b.num}">
-          <input class="num" data-code="${i}" value="${esc(b.code || '')}" placeholder="Code" style="text-transform:uppercase" maxlength="6">
+          <button data-pat="${i}" title="Symbole de la pince" style="flex:0 0 auto;padding:0;border:none;background:none;cursor:pointer">${isPat(b.code) ? patSVG(b.code, 40) : '<span style="display:grid;place-items:center;width:40px;height:40px;border:1.5px dashed var(--line);border-radius:6px;font-size:.62rem;font-weight:800;color:var(--muted)">＋ pince</span>'}</button>
           <div class="lvl">${[1, 2, 3].map(l => `<button data-niv="${i}" data-l="${l}" class="${b.niv === l ? 'on' : ''}">Niv ${l}</button>`).join('')}</div>
           <label class="chk-ob"><input type="checkbox" data-ob="${i}" ${b.ob ? 'checked' : ''}>oblig.</label><button class="btn btn-ghost" style="padding:6px 9px" data-rm="${i}">✕</button></div>`).join('')}</div>
         <button class="btn btn-ghost btn-block" style="margin-top:8px" id="addb">＋ Ajouter une balise</button></div>
@@ -114,8 +140,7 @@ TOOL_IMPL.co = function (el) {
       const read = () => { p.nom = $('#nm').value.trim() || 'Parcours'; p.distance = +$('#di').value || 0; p.alloue = +$('#al').value || 0; p.ecart = +$('#ec').value || 0;
         p.denivOn = $('#dn').checked; if ($('#dv')) p.deniv = +$('#dv').value || 0;
         p.pts = [+$('#p1').value || 0, +$('#p2').value || 0, +$('#p3').value || 0]; p.penWrongP = +$('#pwp').value || 0; p.penWrongS = +$('#pws').value || 0; p.penMissS = +$('#pms').value || 0; p.penOverP = +$('#pop').value || 0;
-        box.querySelectorAll('[data-num]').forEach(i => p.balises[+i.dataset.num].num = +i.value || 0);
-        box.querySelectorAll('[data-code]').forEach(i => p.balises[+i.dataset.code].code = i.value.trim().toUpperCase()); };
+        box.querySelectorAll('[data-num]').forEach(i => p.balises[+i.dataset.num].num = +i.value || 0); };
       $('#ty').onchange = () => { read(); p.type = $('#ty').value; if (p.type === 'reseau') p.balises.forEach(b => b.ob = false); draw(); };
       $('#dn').onchange = () => { read(); draw(); };
       $('#genb').onclick = () => { read(); const n = Math.max(1, +$('#nb').value || 1), n0 = +$('#n0').value || 31;
@@ -126,6 +151,10 @@ TOOL_IMPL.co = function (el) {
       box.querySelectorAll('[data-niv]').forEach(b => b.onclick = () => { read(); p.balises[+b.dataset.niv].niv = +b.dataset.l; draw(); });
       box.querySelectorAll('[data-ob]').forEach(c => c.onchange = () => { p.balises[+c.dataset.ob].ob = c.checked; });
       box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { read(); p.balises.splice(+b.dataset.rm, 1); draw(); });
+      box.querySelectorAll('[data-pat]').forEach(b => b.onclick = () => { read(); const i = +b.dataset.pat;
+        patPicker({ title: `Symbole de la balise ${p.balises[i].num}`, options: CO_PATS, current: p.balises[i].code, used: p.balises.map(x => x.code).filter(isPat),
+          extra: isPat(p.balises[i].code) ? [{ v: '', l: 'Retirer le symbole' }] : [], onPick: c => { p.balises[i].code = c; draw(); } }); });
+      $('#autop').onclick = () => { read(); const free = CO_PATS.filter(c => !p.balises.some(b => b.code === c)); p.balises.forEach(b => { if (!isPat(b.code)) b.code = free.shift() || ''; }); draw(); };
       $('#bk').onclick = () => listParcours(box);
       if ($('#del')) $('#del').onclick = () => { if (confirm('Supprimer ce parcours ?')) { DB.co.parcours.splice(idx, 1); save(); listParcours(box); } };
       $('#sv').onclick = () => { read(); const nums = p.balises.map(b => b.num); if (new Set(nums).size !== nums.length) return toast('Deux balises ont le même numéro');
@@ -226,28 +255,28 @@ TOOL_IMPL.co = function (el) {
   /* ================= CONTRÔLE DES CARTONS ================= */
   const CK = { pc: null, ans: {}, photo: null, run: '' };
   function controle(box) {
-    const withCodes = DB.co.parcours.filter(p => p.balises.some(b => b.code));
-    if (!withCodes.length) { box.innerHTML = `<div class="card empty">Saisissez d'abord les <b>codes des balises</b> dans un parcours (onglet 🗺 Parcours → ✏️).</div>`; return; }
+    const withCodes = DB.co.parcours.filter(p => p.balises.some(b => isPat(b.code)));
+    if (!withCodes.length) { box.innerHTML = `<div class="card empty">Attribuez d'abord un <b>symbole de pince</b> aux balises d'un parcours (onglet 🗺 Parcours → ✏️).</div>`; return; }
     const cur = DB.co.current;
     if (!withCodes.some(p => p.id === CK.pc)) CK.pc = cur && withCodes.some(p => p.id === cur.parcours) ? cur.parcours : withCodes[0].id;
     const p = P(CK.pc), live = cur && cur.parcours === p.id ? cur : null;
-    const norm = v => String(v || '').toUpperCase().replace(/\s+/g, '');
-    const status = b => { const a = norm(CK.ans[b.num]); if (!a) return 0; return !b.code ? 0 : a === norm(b.code) ? 1 : -1; };
+    const status = b => { const a = CK.ans[b.num]; if (!a || !isPat(b.code)) return 0; return a === b.code ? 1 : -1; };
+    const cell = b => { const a = CK.ans[b.num]; return !a ? '<span style="display:grid;place-items:center;width:44px;height:44px;border:1.5px dashed var(--line);border-radius:6px;font-size:.62rem;font-weight:800;color:var(--muted)">choisir</span>'
+      : a === 'X' ? '<span style="display:grid;place-items:center;width:44px;height:44px;border:1.5px solid var(--danger);border-radius:6px;font-weight:900;color:var(--danger)">?</span>' : patSVG(a, 44); };
+    const res = b => { const s2 = status(b); return s2 === 1 ? '<b style="color:#1B9E5A">✔ bon</b>' : s2 === -1 ? '<b style="color:var(--danger)">✗ faux</b>' : '<span class="muted">non poinçonnée</span>'; };
     const draw = () => {
       const st = p.balises.map(status), ok = st.filter(x => x === 1).length, ko = st.filter(x => x === -1).length;
       box.innerHTML = `<div class="card"><label>Parcours</label><select id="kp">${withCodes.map(x => `<option value="${x.id}" ${x.id === p.id ? 'selected' : ''}>${esc(x.nom)}</option>`).join('')}</select>
           ${live ? `<label>Participant (séance en cours)</label><select id="kr"><option value="">— Contrôle seul —</option>${live.runs.map((r, i) => `<option value="${i}" ${String(i) === CK.run ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select>` : ''}</div>
         <div class="card" style="margin-top:12px"><h3>📷 Photo du carton de l'élève</h3>
-          ${CK.photo ? `<img src="${CK.photo}" id="kimg" style="width:100%;max-height:360px;object-fit:contain;border-radius:12px;background:#000;cursor:zoom-in">` : '<p class="muted" style="margin:0 0 8px">Facultatif : la photo s\'affiche ici pour recopier les codes plus facilement.</p>'}
-          <div class="row" style="margin-top:8px"><label class="btn btn-ghost" style="display:block;text-align:center;cursor:pointer;margin:0">📷 ${CK.photo ? 'Changer' : 'Prendre / choisir'}<input id="kf" type="file" accept="image/*" capture="environment" style="display:none"></label>
-            ${CK.photo ? '<button class="btn btn-grad" id="kocr">🔍 Lecture automatique (essai)</button>' : ''}</div>
-          ${CK.photo ? '<p class="muted" style="margin:8px 0 0;font-size:.78rem">La photo est analysée sur l\'appareil (rien n\'est envoyé). Lecture fiable surtout pour des codes écrits en majuscules bien lisibles : vérifiez toujours le résultat. Le module de lecture est téléchargé la 1re fois (connexion nécessaire).</p><div id="kmsg" class="muted" style="margin-top:6px;font-weight:700"></div>' : ''}</div>
-        <div class="card" style="margin-top:12px"><h3>Codes relevés par l'élève</h3>
-          <div class="sheet-table"><table><tr><th>Balise</th><th>Code relevé</th><th>Résultat</th></tr>
-          ${p.balises.map((b, i) => `<tr><td><b>${b.num}</b>${b.ob ? ' <span class="muted" style="font-size:.7rem">oblig.</span>' : ''}</td>
-            <td><input data-a="${b.num}" value="${esc(CK.ans[b.num] || '')}" style="text-transform:uppercase;padding:7px;max-width:120px" ${b.code ? '' : 'disabled placeholder="pas de code"'}></td>
-            <td data-s="${b.num}">${st[i] === 1 ? '<b style="color:#1B9E5A">✔ bon</b>' : st[i] === -1 ? `<b style="color:var(--danger)">✗ faux</b> <span class="muted">(${esc(b.code)})</span>` : '<span class="muted">—</span>'}</td></tr>`).join('')}</table></div>
-          <div class="result" style="margin-top:10px"><div class="card"><b id="kok">${ok}</b><small>bonnes</small></div><div class="card"><b id="kko">${ko}</b><small>fausses</small></div><div class="card"><b id="kvi">${p.balises.length - ok - ko}</b><small>non trouvées</small></div></div>
+          ${CK.photo ? `<img src="${CK.photo}" id="kimg" style="width:100%;max-height:360px;object-fit:contain;border-radius:12px;background:#000;cursor:zoom-in">` : '<p class="muted" style="margin:0 0 8px">Facultatif : la photo reste affichée ici pendant que vous comparez les symboles.</p>'}
+          <label class="btn btn-ghost btn-block" style="display:block;text-align:center;cursor:pointer;margin:8px 0 0">📷 ${CK.photo ? 'Changer la photo' : 'Prendre / choisir une photo'}<input id="kf" type="file" accept="image/*" capture="environment" style="display:none"></label></div>
+        <div class="card" style="margin-top:12px"><h3>Symboles poinçonnés par l'élève</h3>
+          <p class="muted" style="margin:0 0 6px;font-size:.8rem">Pour chaque case du carton, touchez le symbole que vous voyez.</p>
+          <div class="sheet-table"><table><tr><th>Balise</th><th>Attendu</th><th>Carton</th><th>Résultat</th></tr>
+          ${p.balises.map(b => `<tr><td><b>${b.num}</b>${b.ob ? ' <span class="muted" style="font-size:.7rem">oblig.</span>' : ''}</td><td>${isPat(b.code) ? patSVG(b.code, 34, '#8A94A6') : '<span class="muted">—</span>'}</td>
+            <td>${isPat(b.code) ? `<button data-a="${b.num}" style="padding:0;border:none;background:none;cursor:pointer">${cell(b)}</button>` : ''}</td><td>${res(b)}</td></tr>`).join('')}</table></div>
+          <div class="result" style="margin-top:10px"><div class="card"><b>${ok}</b><small>bonnes</small></div><div class="card"><b>${ko}</b><small>fausses</small></div><div class="card"><b>${p.balises.length - ok - ko}</b><small>non poinçonnées</small></div></div>
           ${live ? `<button class="btn btn-grad btn-block" style="margin-top:12px" id="kap">✔ Reporter dans la séance</button>` : ''}
           <button class="btn btn-ghost btn-block" style="margin-top:8px" id="kz">↺ Carton suivant</button></div>`;
       const $ = s => box.querySelector(s);
@@ -257,19 +286,10 @@ TOOL_IMPL.co = function (el) {
       $('#kf').onchange = e => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f), img = new Image();
         img.onload = () => { const r = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = img.width * r; c.height = img.height * r; c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); CK.photo = c.toDataURL('image/jpeg', .85); draw(); };
         img.src = url; };
-      box.querySelectorAll('[data-a]').forEach(i => i.oninput = () => { CK.ans[i.dataset.a] = i.value; const b = p.balises.find(x => String(x.num) === i.dataset.a), s2 = status(b);
-        box.querySelector(`[data-s="${i.dataset.a}"]`).innerHTML = s2 === 1 ? '<b style="color:#1B9E5A">✔ bon</b>' : s2 === -1 ? `<b style="color:var(--danger)">✗ faux</b> <span class="muted">(${esc(b.code)})</span>` : '<span class="muted">—</span>';
-        const all = p.balises.map(status), o = all.filter(x => x === 1).length, k = all.filter(x => x === -1).length; $('#kok').textContent = o; $('#kko').textContent = k; $('#kvi').textContent = p.balises.length - o - k; });
-      if ($('#kocr')) $('#kocr').onclick = async () => { const m = $('#kmsg'); try {
-          m.textContent = 'Chargement du module de lecture…';
-          if (!window.Tesseract) await new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; sc.onload = ok; sc.onerror = () => ko(new Error('Module de lecture indisponible (hors ligne ?)')); document.head.appendChild(sc); });
-          m.textContent = 'Lecture de la photo…';
-          const w = await Tesseract.createWorker('eng'); await w.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:-=. ' });
-          const { data } = await w.recognize(CK.photo); await w.terminate();
-          const n = coReadCodes(data.text || '', p.balises); let filled = 0;
-          Object.entries(n).forEach(([num, code]) => { if (!norm(CK.ans[num])) { CK.ans[num] = code; filled++; } });
-          draw(); box.querySelector('#kmsg').textContent = filled ? `${filled} code(s) reconnu(s) : vérifiez-les.` : 'Aucun code reconnu : saisissez-les à la main.';
-        } catch (er) { m.textContent = er.message || 'Lecture impossible'; } };
+      box.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { const num = b.dataset.a;
+        const opts = [...new Set(p.balises.map(x => x.code).filter(isPat))];
+        patPicker({ title: `Carton — case de la balise ${num}`, options: opts, draw: false, current: CK.ans[num],
+          extra: [{ v: 'X', l: '❓ Autre symbole (faux)' }, { v: '', l: '◻︎ Case vide (non poinçonnée)' }], onPick: c => { CK.ans[num] = c; draw(); } }); });
       if ($('#kap')) $('#kap').onclick = () => { if (CK.run === '') return toast('Choisissez le participant'); const r = live.runs[+CK.run];
         r.found = p.balises.filter(b => status(b) === 1).map(b => b.num); r.wrong = p.balises.filter(b => status(b) === -1).length; save();
         toast(`${r.name} : ${r.found.length} balise(s) ✔`); CK.ans = {}; CK.photo = null; CK.run = String(Math.min(+CK.run + 1, live.runs.length - 1)); draw(); };

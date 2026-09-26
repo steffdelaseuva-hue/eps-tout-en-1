@@ -21,7 +21,7 @@ function natationVite(el) {
   const n2 = x => x ? x.toFixed(2).replace('.', ',') : '–';
   const draw = () => {
     el.innerHTML = `<div class="card">
-        <div class="row">${DB.classes.length ? `<div><label>Classe</label><select id="cl"><option value="">—</option>${DB.classes.map(c => `<option>${esc(c.name)}</option>`).join('')}</select></div>` : ''}<div><label>Élève</label><input id="el" list="nat-el" placeholder="Nom"><datalist id="nat-el"></datalist></div></div>
+        <div class="row">${DB.classes.length ? `<div><label>Classe</label><select id="cl"><option value="">—</option>${DB.classes.map(c => `<option ${c.name === DB.lastClass ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>` : ''}<div><label>Élève</label><div id="elw"></div></div></div>
         <label>Distance nagée (m)</label><div class="row"><input id="d" type="number" value="25">${[25, 50, 100, 200].map(v => `<button class="btn btn-ghost" style="flex:0 0 auto;padding:10px" data-d="${v}">${v}</button>`).join('')}</div>
         <label>Temps de nage</label>
         <div class="big clock" id="tm" style="font-size:clamp(2.6rem,13vw,4.5rem);padding:4px 0">00:00,00</div>
@@ -39,8 +39,9 @@ function natationVite(el) {
       $('#res').innerHTML = `<div class="card"><b>${n2(x.v)}</b><small>m/s</small></div><div class="card"><b>${x.t100 ? fmt(x.t100 * 1000) : '–'}</b><small>au 100 m</small></div>
         <div class="card"><b>${n2(x.amp)}</b><small>m par coup de bras</small></div><div class="card"><b>${x.freq ? Math.round(x.freq) : '–'}</b><small>coups de bras / min</small></div>
         <div class="card" style="grid-column:1/-1"><b>${natI(natIndice(d, t, c))}</b><small>indice de nage sur 25 m (temps en s + coups de bras)${d !== 25 ? ' — distance 25 m uniquement' : ''}</small></div>`; };
-    const fillNames = () => { const c = $('#cl')?.value; $('#nat-el').innerHTML = (c ? studentsOf(c) : [...new Set(DB.natation.map(r => r.eleve))]).map(n => `<option value="${esc(n)}">`).join(''); };
-    if ($('#cl')) $('#cl').onchange = fillNames; fillNames();
+    const fillNames = () => { const c = $('#cl')?.value;
+      $('#elw').innerHTML = c ? `<select id="el">${studentsOf(c).map(n => `<option>${esc(n)}</option>`).join('')}</select>` : '<input id="el" placeholder="Nom de l\'élève">'; };
+    if ($('#cl')) $('#cl').onchange = () => { DB.lastClass = $('#cl').value || DB.lastClass; save(); fillNames(); }; fillNames();
     el.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { $('#d').value = b.dataset.d; res(); });
     ['#d', '#mm', '#ss', '#c'].forEach(s => $(s).oninput = res);
     $('#go').onclick = () => { if (run) { acc = secOf(); run = false; $('#go').textContent = '▶ Reprendre'; beep(900, .2); }
@@ -50,8 +51,8 @@ function natationVite(el) {
     $('#cm').onclick = () => { $('#c').value = Math.max(0, (+$('#c').value || 0) - 1); res(); };
     $('#sv').onclick = () => { const eleve = $('#el').value.trim(), d = +$('#d').value || 0, t = time(), c = +$('#c').value || 0;
       if (!eleve) return toast('Nom de l\'élève requis'); if (!d || !t) return toast('Distance et temps requis');
-      DB.natation.push({ date: Date.now(), classe: $('#cl')?.value || '', eleve, d, t: Math.round(t * 100) / 100, c }); save(); toast('Enregistré ✔');
-      run = false; acc = 0; $('#el').value = ''; $('#c').value = 0; $('#mm').value = ''; $('#ss').value = ''; $('#go').textContent = '▶ Départ'; $('#tm').textContent = '00:00,00'; res(); list(); };
+      DB.natation.push({ date: Date.now(), classe: $('#cl')?.value || '', eleve, d, t: Math.round(t * 100) / 100, c }); save(); toast(`${eleve} : enregistré ✔`);
+      run = false; acc = 0; { const e = $('#el'); if (e.tagName === 'SELECT') { if (e.selectedIndex < e.options.length - 1) e.selectedIndex++; } else e.value = ''; } $('#c').value = 0; $('#mm').value = ''; $('#ss').value = ''; $('#go').textContent = '▶ Départ'; $('#tm').textContent = '00:00,00'; res(); list(); };
     const list = () => {
       const cur = $('#fl').value, names = [...new Set(DB.natation.map(r => r.eleve))].sort();
       $('#fl').innerHTML = '<option value="">Tous les élèves</option>' + names.map(n => `<option ${n === cur ? 'selected' : ''}>${esc(n)}</option>`).join('');
