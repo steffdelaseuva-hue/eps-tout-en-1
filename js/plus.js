@@ -2,9 +2,11 @@
    EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '3.0';
+const APP_VERSION = '3.2';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-one/';
 const CHANGELOG = [
+  { v: '3.2', items: ['Synchronisation branchée sur le projet Firebase EPS ONE'] },
+  { v: '3.1', items: ['Synchronisation iPhone ↔ iPad (compte + Firebase)'] },
   { v: '3.0', items: ['Nouvelle adresse : steffdelaseuva-hue.github.io/eps-one/'] },
   { v: '2.9', items: ['Nouveau nom : EPS ONE', 'Nouvelle icône : joueur + traceur'] },
   { v: '2.8', items: ['Grilles d\'évaluation : par points ou par compétences, niveaux personnalisés, descripteurs, import CSV / Excel (iDoceo, tableur) et modèles'] },
@@ -245,6 +247,7 @@ function renderPlus() {
   box.innerHTML = `
     <div class="menu-sec">Données & partage</div>
     <div class="card" style="padding:0">
+      ${item('update', 'grad', 'Synchronisation iPhone ↔ iPad', `<span id="sync-sub">${window.syncStatusText ? window.syncStatusText() : 'Non configurée'}</span>`, 'openSync()')}
       ${item('save', 'blue', 'Exporter mes données', 'Fichier de sauvegarde JSON', 'exportData()')}
       ${item('restore', 'blue', 'Importer une sauvegarde', 'Restaurer depuis un fichier JSON', "document.getElementById('imp').click()")}
       ${item('share', 'grad', 'Partager l\'app', 'QR code et lien', 'openShare()')}
