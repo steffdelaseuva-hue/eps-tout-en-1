@@ -2,9 +2,11 @@
    EPS ONE — Onglet PLUS : mise à jour, partage,
    à propos, confidentialité/RGPD, nouvelle année scolaire
    ========================================================= */
-const APP_VERSION = '4.6';
+const APP_VERSION = '4.8';
 const APP_URL = 'https://steffdelaseuva-hue.github.io/eps-one/';
 const CHANGELOG = [
+  { v: '4.8', items: ['Groupes et participants modifiables pendant la séance (absent, blessé…) : Duathlon, Course d’orientation, Crosstraining / HYROX, Combiné athlétique — les données de l’élève le suivent'] },
+  { v: '4.7', items: ['Acrosport : groupes modifiables (déplacer, retirer un absent, ajouter, supprimer un groupe ou tous), vider un enchaînement', 'Gestion de match : zone « Non placés / absents » dans la composition des équipes'] },
   { v: '4.6', items: ['À propos : remerciements mis à jour'] },
   { v: '4.5', items: ['Acrosport : correction des pyramides qui disparaissaient, groupes d’élèves par classe, enchaînement du groupe (pyramides de la banque + photos), présentation', 'Rugby : la ligne d’avantage est intégrée à Gestion de match (sport Rugby) au lieu d’un outil à part'] },
   { v: '4.4', items: ['Natation (nager vite) : liste des élèves de la classe au lieu de la saisie du nom, passage automatique à l’élève suivant'] },

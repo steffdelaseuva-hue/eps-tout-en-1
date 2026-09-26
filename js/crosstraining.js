@@ -112,7 +112,7 @@ TOOL_IMPL.wod = function (el) {
       box.innerHTML = `<div class="card"><b>${esc(e.nom)}</b><div class="muted">${esc(cur.classe || '')} · ${summaryOf(e)}</div>
           <div class="big clock" id="gclk" style="font-size:clamp(2.4rem,12vw,4rem);padding:4px 0">0:00</div>
           <div class="muted" style="text-align:center" id="capinfo"></div>
-          <div class="row" style="margin-top:8px"><button class="btn btn-grad" id="all">🚩 Départ groupé</button></div></div>
+          <div class="row" style="margin-top:8px"><button class="btn btn-grad" id="all">🚩 Départ groupé</button></div><button class="btn btn-ghost btn-block" style="margin-top:8px" id="edg">✏️ Modifier les groupes / participants (absent, blessé…)</button></div>
         <details class="card" style="margin-top:10px"><summary style="font-weight:800;cursor:pointer">📋 Rappel de l'épreuve</summary>${e.blocs.map((b, i) => `<div style="margin-top:8px"><b>Bloc ${i + 1}</b> <span class="muted">· ${WOD_FAM[b.famille]} · ${b.series} série${b.series > 1 ? 's' : ''}</span>
           <div class="muted" style="font-size:.85rem">${b.ex.map(x => `${x.reps} ${esc(x.nom)} (N${x.niv})`).join(' · ')}${b.run ? ` · RUN ${b.runVal} ${RUN_T[b.runType]}` : ''}</div></div>`).join('')}</details>
         ${cur.groups.map((g, i) => { const r = resOf(g, e);
@@ -124,6 +124,11 @@ TOOL_IMPL.wod = function (el) {
         <div class="row" style="margin-top:12px"><button class="btn btn-grad" id="save">💾 Terminer et enregistrer</button><button class="btn btn-ghost" id="cancel">Abandonner</button></div>`;
       const $ = s => box.querySelector(s), all = s => box.querySelectorAll(s), keep = () => save();
       $('#all').onclick = () => { const t = Date.now(); cur.groups.forEach(g => { if (!g.dep) g.dep = t; }); cur.start = cur.start || t; beep(1300, .45); keep(); draw(); };
+      $('#edg').onclick = () => { const indiv = cur.groups.every(g => g.members.length === 1 && g.name === g.members[0]);
+        editGroupsPanel(indiv ? 'Participants' : 'Groupes de la séance', { cls: cur.classe, indiv, list: () => cur.groups, names: g => g.members,
+          take: (g, n) => { g.members.splice(g.members.indexOf(n), 1); return indiv ? { dep: g.dep, arr: g.arr, capped: g.capped, splits: g.splits } : null; },
+          put: (g, n, d) => { g.members.push(n); if (indiv && d) Object.assign(g, d); },
+          make: name => ({ name, members: [], dep: null, arr: null, capped: false, splits: (cur.groups[0]?.splits || []).map(() => null) }), onChange: keep, onClose: draw }); };
       all('[data-go]').forEach(b => b.onclick = () => { cur.groups[+b.dataset.go].dep = Date.now(); cur.start = cur.start || Date.now(); beep(1300, .3); keep(); draw(); });
       all('[data-fin]').forEach(b => b.onclick = () => { const g = cur.groups[+b.dataset.fin]; g.arr = Date.now(); beep(1000, .3); keep(); draw(); });
       all('[data-undo]').forEach(b => b.onclick = () => { const g = cur.groups[+b.dataset.undo]; g.arr = null; g.capped = false; keep(); draw(); });

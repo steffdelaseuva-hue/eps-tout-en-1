@@ -168,26 +168,45 @@ TOOL_IMPL.acrosport = function (el) {
     ({ groupes: tabGroupes, banque: tabBanque, enchainement: tabEnch })[tab]($('#ab'));
   }
 
-  /* ---------- Groupes ---------- */
+  /* ---------- Groupes (modifiables) ---------- */
+  let selSt = null;                                   // élève sélectionné : { g: index de groupe ou -1 (non placés), n: nom }
   function tabGroupes(box) {
     if (!DB.classes.length) { box.innerHTML = noClassMsg; return; }
-    const gs = groups();
-    box.innerHTML = `<div class="card"><h3>${gs.length ? 'Refaire les groupes' : 'Former les groupes'}</h3><div id="acmp"></div></div>
-      <div class="section-title"><h2>Groupes de ${esc(cls)} (${gs.length})</h2></div>
-      ${gs.length ? `<div class="teams">${gs.map((g, k) => `<div class="card team" style="border-top:5px solid ${k === gi ? 'var(--gold)' : 'var(--line)'}"><h3><span>${esc(g.name)}</span><span class="muted">${g.members.length}</span></h3>
-          <ul>${g.members.map(n => `<li>${esc(n)}</li>`).join('')}</ul><div class="muted" style="font-size:.78rem;margin-top:6px">${g.seq.length} élément(s) dans l'enchaînement</div>
-          <div class="row" style="margin-top:8px;gap:6px"><button class="btn btn-grad" style="padding:8px" data-open="${k}">🎬 Ouvrir</button><button class="btn btn-ghost" style="padding:8px" data-ren="${k}">✏️</button></div></div>`).join('')}</div>`
-        : '<div class="card empty">Aucun groupe pour cette classe.</div>'}`;
+    const gs = groups(), placed = new Set(gs.flatMap(g => g.members)), free = studentsOf(cls).filter(n => !placed.has(n));
+    const chip = (gIdx, n) => `<button class="pl-chip ${selSt && selSt.g === gIdx && selSt.n === n ? 'sel' : ''}" data-st="${gIdx}" data-n="${esc(n)}" style="padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:${selSt && selSt.g === gIdx && selSt.n === n ? 'var(--grad)' : 'var(--card)'};color:${selSt && selSt.g === gIdx && selSt.n === n ? '#fff' : 'inherit'};font-weight:700;font-size:.85rem;cursor:pointer">${esc(n)}</button>`;
+    box.innerHTML = `<details class="card" ${gs.length ? '' : 'open'}><summary style="font-weight:800;cursor:pointer">🧩 ${gs.length ? 'Refaire les groupes automatiquement' : 'Former les groupes'}</summary><div id="acmp" style="margin-top:6px"></div></details>
+      <div class="section-title"><h2>Groupes de ${esc(cls)} (${gs.length})</h2>${gs.length ? '<button class="link" id="agdel">Supprimer tous les groupes</button>' : ''}</div>
+      ${gs.length || free.length ? `<p class="muted" style="margin:-4px 0 8px;font-size:.82rem">Touchez un élève, puis un autre groupe pour l'y déplacer, ou « Non placés / absents » pour le retirer.</p>` : ''}
+      <div class="teams">${gs.map((g, k) => `<div class="card team" data-drop="${k}" style="cursor:pointer;border-top:5px solid ${k === gi ? 'var(--gold)' : 'var(--line)'}">
+          <h3><span>${esc(g.name)}</span><span class="muted">${g.members.length}</span></h3>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">${g.members.map(n => chip(k, n)).join('') || '<span class="muted">Groupe vide</span>'}</div>
+          <div class="muted" style="font-size:.78rem;margin-top:6px">${g.seq.length} élément(s) dans l'enchaînement</div>
+          <div class="row" style="margin-top:8px;gap:6px"><button class="btn btn-grad" style="padding:8px" data-open="${k}">🎬 Ouvrir</button><button class="btn btn-ghost" style="padding:8px;flex:0 0 42px" data-ren="${k}">✏️</button><button class="btn btn-ghost" style="padding:8px;flex:0 0 42px" data-gdel="${k}">🗑</button></div></div>`).join('')}
+        <div class="card team" data-drop="-1" style="cursor:pointer;border-top:5px dashed var(--line);background:var(--grad-soft)"><h3><span>Non placés / absents</span><span class="muted">${free.length}</span></h3>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">${free.map(n => chip(-1, n)).join('') || '<span class="muted">Tous les élèves sont dans un groupe.</span>'}</div></div></div>
+      <button class="btn btn-ghost btn-block" style="margin-top:12px" id="agadd">＋ Nouveau groupe</button>`;
     mountComposer(box.querySelector('#acmp'), { id: 'acg', modes: ['random', 'hetero', 'homo'], button: '👥 Former les groupes',
       onTeams: teams => { if (gs.some(g => g.seq.length) && !confirm('Remplacer les groupes existants ? Leurs enchaînements seront supprimés.')) return;
-        gs.forEach(g => g.seq.forEach(it => { if (it.img) DB[acroImgKey(it.img)] = null; }));
-        A.groupes[cls] = teams.map(t => ({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: t.name.replace('Équipe', 'Groupe'), members: t.members.map(m => m.n), seq: [] }));
-        gi = 0; save(); toast('Groupes formés ✔'); frame(); } });
+        clearImgs(gs);
+        A.groupes[cls] = teams.map(t => ({ id: newId(), name: t.name.replace('Équipe', 'Groupe'), members: t.members.map(m => m.n), seq: [] }));
+        gi = 0; selSt = null; save(); toast('Groupes formés ✔'); frame(); } });
     const sel = box.querySelector('#acg-cls'); if (sel) { sel.value = cls; sel.dispatchEvent(new Event('change')); }
     const k = box.querySelector('#acg-k'), v = box.querySelector('#acg-v'); if (k && v) { k.value = 's'; v.value = 3; }
-    box.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { gi = +b.dataset.open; tab = 'enchainement'; frame(); });
-    box.querySelectorAll('[data-ren]').forEach(b => b.onclick = () => { const g = gs[+b.dataset.ren], n = prompt('Nom du groupe', g.name); if (n && n.trim()) { g.name = n.trim(); save(); frame(); } });
+    box.querySelectorAll('[data-st]').forEach(b => b.onclick = e => { e.stopPropagation(); const g = +b.dataset.st, n = b.dataset.n;
+      selSt = selSt && selSt.g === g && selSt.n === n ? null : { g, n }; tabGroupes(box); });
+    box.querySelectorAll('[data-drop]').forEach(c => c.onclick = () => { if (!selSt) return; const to = +c.dataset.drop;
+      if (to !== selSt.g) { if (selSt.g >= 0) { const m = gs[selSt.g].members; m.splice(m.indexOf(selSt.n), 1); } if (to >= 0) gs[to].members.push(selSt.n); save(); }
+      selSt = null; frame(); });
+    box.querySelectorAll('[data-open]').forEach(b => b.onclick = e => { e.stopPropagation(); gi = +b.dataset.open; tab = 'enchainement'; frame(); });
+    box.querySelectorAll('[data-ren]').forEach(b => b.onclick = e => { e.stopPropagation(); const g = gs[+b.dataset.ren], n = prompt('Nom du groupe', g.name); if (n && n.trim()) { g.name = n.trim(); save(); frame(); } });
+    box.querySelectorAll('[data-gdel]').forEach(b => b.onclick = e => { e.stopPropagation(); const i = +b.dataset.gdel, g = gs[i];
+      if (!confirm(`Supprimer ${g.name} ?${g.seq.length ? '\nSon enchaînement sera supprimé.' : ''}\nSes élèves passent dans « Non placés ».`)) return;
+      clearImgs([g]); gs.splice(i, 1); if (gi >= gs.length) gi = Math.max(0, gs.length - 1); selSt = null; save(); frame(); });
+    box.querySelector('#agadd').onclick = () => { gs.push({ id: newId(), name: 'Groupe ' + (gs.length + 1), members: [], seq: [] }); gi = gs.length - 1; save(); frame(); };
+    const d = box.querySelector('#agdel'); if (d) d.onclick = () => { if (!confirm('Supprimer tous les groupes de la classe et leurs enchaînements ?')) return; clearImgs(gs); A.groupes[cls] = []; gi = 0; selSt = null; save(); frame(); };
   }
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  const clearImgs = list => list.forEach(g => g.seq.forEach(it => { if (it.img) DB[acroImgKey(it.img)] = null; }));
 
   /* ---------- Banque de pyramides ---------- */
   const chips = (key, opts) => `<div class="tog">${opts.map(([v, l]) => `<button data-f="${key}" data-v="${v}" class="${String(F[key]) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
@@ -235,7 +254,7 @@ TOOL_IMPL.acrosport = function (el) {
       <div class="row" style="margin-top:12px"><button class="btn btn-ghost" id="afig">📚 Ajouter une pyramide</button>
         <label class="btn btn-ghost" style="display:block;text-align:center;cursor:pointer;margin:0">📷 Ajouter une photo<input id="aph" type="file" accept="image/*" capture="environment" style="display:none"></label></div>
       ${g.seq.length ? `<button class="btn btn-grad btn-block" style="margin-top:10px" id="aplay">▶ Présenter l'enchaînement</button>` : ''}
-      <div class="section-title"><h2>Enchaînement (${g.seq.length})</h2></div>
+      <div class="section-title"><h2>Enchaînement (${g.seq.length})</h2>${g.seq.length ? '<button class="link" id="aclr">🗑 Vider l\'enchaînement</button>' : ''}</div>
       ${g.seq.length ? `<div style="display:flex;flex-direction:column;gap:10px">${g.seq.map((it, k) => { const f = it.t === 'fig' ? ACRO.find(x => x.id === it.fig) : null, img = it.img ? DB[acroImgKey(it.img)] : null;
         return `<div class="card" style="padding:10px;display:flex;gap:10px;align-items:center">
           <div style="flex:0 0 30px;height:30px;border-radius:50%;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:900">${k + 1}</div>
@@ -258,6 +277,7 @@ TOOL_IMPL.acrosport = function (el) {
     box.querySelectorAll('[data-dn]').forEach(b => b.onclick = () => mv(+b.dataset.dn, 1));
     box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { if (!confirm('Retirer cet élément de l\'enchaînement ?')) return; const [x] = g.seq.splice(+b.dataset.rm, 1); if (x.img) DB[acroImgKey(x.img)] = null; save(); frame(); });
     if ($('#aplay')) $('#aplay').onclick = () => present(g);
+    if ($('#aclr')) $('#aclr').onclick = () => { if (!confirm(`Vider l'enchaînement de ${g.name} ?`)) return; clearImgs([g]); g.seq = []; save(); frame(); };
   }
   function present(g) {
     let k = 0; const o = document.createElement('div');

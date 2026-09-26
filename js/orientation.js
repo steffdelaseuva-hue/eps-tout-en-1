@@ -187,7 +187,7 @@ TOOL_IMPL.co = function (el) {
     const draw = () => {
       const rs = cur.runs.map(r => ({ r, x: result(r, p) }));
       box.innerHTML = `<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><b>${esc(p.nom)}</b><div class="muted">${esc(cur.classe || '')} · ${CO_TYPES[p.type][0]} · ${p.balises.length} balises${p.alloue ? ` · ${p.alloue} min ± ${p.ecart}` : ''}</div></div><div class="run-t" id="now">${clock(Date.now())}</div></div>
-          <div class="row" style="margin-top:10px"><button class="btn btn-grad" id="all">🚩 Départ groupé</button><div style="display:flex;gap:6px;align-items:center;flex:1.3"><input id="gap" type="number" value="${cur.gap || 60}" style="width:70px;padding:8px"><button class="btn btn-ghost" id="stag" style="padding:9px 8px;font-size:.8rem">Départs échelonnés (s)</button></div></div>
+          <div class="row" style="margin-top:10px"><button class="btn btn-grad" id="all">🚩 Départ groupé</button><button class="btn btn-ghost btn-block" style="margin-top:8px" id="edg">✏️ Modifier les groupes / participants (absent, blessé…)</button><div style="display:flex;gap:6px;align-items:center;flex:1.3"><input id="gap" type="number" value="${cur.gap || 60}" style="width:70px;padding:8px"><button class="btn btn-ghost" id="stag" style="padding:9px 8px;font-size:.8rem">Départs échelonnés (s)</button></div></div>
           <p class="muted" style="margin:8px 0 0;font-size:.8rem">Balises : touchez un numéro trouvé (souligné rouge = obligatoire).</p></div>
         ${rs.map(({ r, x }, i) => `<div class="run ${r.arr ? 'fin' : r.dep ? 'go' : ''}"><div class="run-h"><b>${esc(r.name)}</b><span class="run-t" data-live="${i}">${r.dep ? hms(((r.arr || Date.now()) - r.dep) / 1000) : '0:00'}</span></div>
             ${r.members.length > 1 || r.name !== r.members[0] ? `<div class="muted" style="font-size:.8rem">${r.members.map(esc).join(', ')}</div>` : ''}
@@ -200,6 +200,11 @@ TOOL_IMPL.co = function (el) {
         <div class="row" style="margin-top:12px"><button class="btn btn-grad" id="save">💾 Terminer et enregistrer la séance</button><button class="btn btn-ghost" id="cancel">Abandonner</button></div>`;
       const $ = s => box.querySelector(s), keep = () => save();
       $('#all').onclick = () => { const t = Date.now(); cur.runs.forEach(r => { if (!r.dep) r.dep = t; }); beep(1300, .4); keep(); draw(); };
+      $('#edg').onclick = () => { const indiv = cur.runs.every(r => r.members.length === 1 && r.name === r.members[0]);
+        editGroupsPanel(indiv ? 'Participants' : 'Groupes de la séance', { cls: cur.classe, indiv, list: () => cur.runs, names: r => r.members,
+          take: (r, n) => { r.members.splice(r.members.indexOf(n), 1); return indiv ? { dep: r.dep, arr: r.arr, found: r.found, wrong: r.wrong, plan: r.plan } : null; },
+          put: (r, n, d) => { r.members.push(n); if (indiv && d) Object.assign(r, d); },
+          make: name => ({ name, members: [], dep: null, arr: null, found: [], wrong: 0 }), onChange: keep, onClose: draw }); };
       $('#stag').onclick = () => { cur.gap = Math.max(5, +$('#gap').value || 60); const t0 = Date.now() + 60000; cur.runs.forEach((r, i) => r.plan = t0 + i * cur.gap * 1000); keep(); toast('Horaires de départ prévus (1er départ dans 1 min)'); draw(); };
       box.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { cur.runs[+b.dataset.go].dep = Date.now(); beep(1300, .3); keep(); draw(); });
       box.querySelectorAll('[data-fin]').forEach(b => b.onclick = () => { cur.runs[+b.dataset.fin].arr = Date.now(); beep(1000, .3); keep(); draw(); });

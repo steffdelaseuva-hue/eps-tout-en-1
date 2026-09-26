@@ -66,7 +66,7 @@ TOOL_IMPL.duathlon = function (el) {
       const e = C.etape;
       box.innerHTML = `<div class="card"><b>${esc(C.nom)}</b><div class="muted">${esc(C.classe)} · ${C.groups.length} groupes${c.optL ? ` · ${c.boucles} boucle(s) par lancer non valide` : ''}${c.optC ? ` · pénalité course ${c.secC} s` : ''}</div>
           <label>Étape</label><div class="seg" id="et">${[0, 1, 2].map(k => `<button data-e="${k}" class="${k === e ? 'on' : ''}">Étape ${k + 1}</button>`).join('')}</div>
-          <button class="btn btn-grad btn-block" style="margin-top:10px" id="all">🚩 Départ groupé — étape ${e + 1}</button></div>
+          <button class="btn btn-grad btn-block" style="margin-top:10px" id="all">🚩 Départ groupé — étape ${e + 1}</button><button class="btn btn-ghost btn-block" style="margin-top:8px" id="edg">✏️ Modifier les groupes / participants (absent, blessé…)</button></div>
         ${C.groups.map((g, gi) => { const E = g.etapes[e], s = stepOf(c, g, e), T = totalOf(c, g);
           return `<div class="run ${E.arr ? 'fin' : E.dep ? 'go' : ''}"><div class="run-h"><b>${esc(g.name)}</b><span class="run-t" data-live="${gi}">${s.temps != null ? dmss(s.temps) : E.dep ? '…' : '0:00'}</span></div>
             <div class="row" style="margin-top:6px">${E.dep ? '' : `<button class="btn btn-grad" data-go="${gi}">▶ Départ</button>`}${E.dep && !E.arr ? `<button class="btn btn-danger" data-fin="${gi}">🏁 Arrivée</button>` : ''}${E.arr ? `<button class="btn btn-ghost" data-undo="${gi}">↺ Annuler l'arrivée</button>` : ''}</div>
@@ -80,6 +80,10 @@ TOOL_IMPL.duathlon = function (el) {
       const $ = s => box.querySelector(s), all = s => box.querySelectorAll(s), keep = () => save();
       all('[data-e]').forEach(b => b.onclick = () => { C.etape = +b.dataset.e; keep(); draw(); });
       $('#all').onclick = () => { const t = Date.now(); C.groups.forEach(g => { if (!g.etapes[e].dep) g.etapes[e].dep = t; }); beep(1300, .45); keep(); draw(); };
+      $('#edg').onclick = () => editGroupsPanel('Groupes du duathlon', { cls: C.classe, list: () => C.groups, names: g => g.members,
+        take: (g, n) => { g.members.splice(g.members.indexOf(n), 1); const d = g.etapes.map(E => E.m[n]); g.etapes.forEach(E => delete E.m[n]); return d; },
+        put: (g, n, d) => { g.members.push(n); g.etapes.forEach((E, k) => E.m[n] = (d && d[k]) || { pts: 0, tours: 0, inval: 0, penC: 0 }); },
+        make: name => ({ name, members: [], etapes: [0, 1, 2].map(() => ({ dep: null, arr: null, m: {} })) }), onChange: keep, onClose: draw });
       all('[data-go]').forEach(b => b.onclick = () => { C.groups[+b.dataset.go].etapes[e].dep = Date.now(); beep(1300, .3); keep(); draw(); });
       all('[data-fin]').forEach(b => b.onclick = () => { C.groups[+b.dataset.fin].etapes[e].arr = Date.now(); beep(1000, .3); keep(); draw(); });
       all('[data-undo]').forEach(b => b.onclick = () => { C.groups[+b.dataset.undo].etapes[e].arr = null; keep(); draw(); });

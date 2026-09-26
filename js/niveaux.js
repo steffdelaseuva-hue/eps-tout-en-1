@@ -193,3 +193,52 @@ TOOL_IMPL.poule = function (el) {
   $('#gen').onclick = gen;
   composerCard(el, { id: 'cpoule', modes: ['random', 'hetero', 'homo'], target: '#pl', before: el, minPerLevel: 2 });
 };
+
+/* =========================================================
+   Éditeur de groupes réutilisable (pendant une séance)
+   Déplacer un élève, retirer un absent / blessé, ajouter un élève,
+   créer / supprimer / renommer un groupe. Les données d'un élève
+   le suivent quand il change de groupe.
+   ad : { cls, indiv, list() → groupes, names(g), take(g, n) → données,
+          put(g, n, données|undefined), make(nom) → groupe, rename(g, nom), onChange() }
+   ========================================================= */
+function editGroupsPanel(title, ad) {
+  const stash = {};                                    // données des élèves retirés (restaurées s'ils reviennent)
+  let sel = null;                                      // { g: index ou -1 (non placés), n }
+  const o = document.createElement('div');
+  o.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(7,18,42,.72);display:grid;place-items:center;padding:12px';
+  const chip = (g, n) => { const on = sel && sel.g === g && sel.n === n;
+    return `<button data-s="${g}" data-n="${esc(n)}" style="padding:6px 10px;border-radius:10px;border:1.5px solid ${on ? 'transparent' : 'var(--line)'};background:${on ? 'var(--grad)' : 'var(--card)'};color:${on ? '#fff' : 'inherit'};font-weight:700;font-size:.85rem;cursor:pointer">${esc(n)}</button>`; };
+  const render = () => {
+    const L = ad.list(), placed = new Set(L.flatMap(g => ad.names(g))), free = (ad.cls ? studentsOf(ad.cls) : []).filter(n => !placed.has(n));
+    o.innerHTML = `<div class="card" style="max-width:640px;width:100%;max-height:92vh;overflow:auto"><h3>${esc(title)}</h3>
+      <p class="muted" style="margin:4px 0 10px;font-size:.82rem">${ad.indiv ? 'Touchez un élève, puis « Non placés / absents » pour le retirer, ou un élève non placé puis « Participants » pour l\'ajouter.' : 'Touchez un élève, puis le groupe de destination, ou « Non placés / absents » pour le retirer (absent, blessé…).'}</p>
+      <div class="teams" style="margin-top:0">${ad.indiv
+        ? `<div class="card team" data-d="new" style="cursor:pointer"><h3><span>Participants</span><span class="muted">${L.length}</span></h3><div style="display:flex;flex-wrap:wrap;gap:5px">${L.map((g, i) => chip(i, ad.names(g)[0] || '?')).join('') || '<span class="muted">—</span>'}</div></div>`
+        : L.map((g, i) => `<div class="card team" data-d="${i}" style="cursor:pointer"><h3><span>${esc(g.name)}</span><span class="muted">${ad.names(g).length}</span></h3>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">${ad.names(g).map(n => chip(i, n)).join('') || '<span class="muted">Groupe vide</span>'}</div>
+          <div class="row" style="margin-top:8px;gap:6px"><button class="btn btn-ghost" style="padding:6px" data-ren="${i}">✏️ Renommer</button><button class="btn btn-ghost" style="padding:6px" data-del="${i}">🗑 Supprimer</button></div></div>`).join('')}
+        <div class="card team" data-d="-1" style="cursor:pointer;border-top:5px dashed var(--line);background:var(--grad-soft)"><h3><span>Non placés / absents</span><span class="muted">${free.length}</span></h3>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">${free.map(n => chip(-1, n)).join('') || '<span class="muted">—</span>'}</div></div></div>
+      ${ad.indiv ? '' : '<button class="btn btn-ghost btn-block" style="margin-top:10px" id="gnew">＋ Nouveau groupe</button>'}
+      <button class="btn btn-grad btn-block" style="margin-top:8px" id="gok">✔ Terminé</button></div>`;
+    const done = () => { ad.onChange(); render(); };
+    o.querySelectorAll('[data-s]').forEach(b => b.onclick = e => { e.stopPropagation(); const g = +b.dataset.s, n = b.dataset.n; sel = sel && sel.g === g && sel.n === n ? null : { g, n }; render(); });
+    o.querySelectorAll('[data-d]').forEach(c => c.onclick = () => { if (!sel) return; const L2 = ad.list(), d = c.dataset.d, s = sel; sel = null;
+      if (ad.indiv) {
+        if (d === '-1' && s.g >= 0) { stash[s.n] = ad.take(L2[s.g], s.n); L2.splice(s.g, 1); }
+        else if (d === 'new' && s.g === -1) { const g = ad.make(s.n); ad.put(g, s.n, stash[s.n]); L2.push(g); }
+      } else {
+        const to = +d; if (to === s.g) return render();
+        const data = s.g >= 0 ? ad.take(L2[s.g], s.n) : stash[s.n];
+        if (to >= 0) ad.put(L2[to], s.n, data); else stash[s.n] = data;
+      }
+      done(); });
+    o.querySelectorAll('[data-ren]').forEach(b => b.onclick = e => { e.stopPropagation(); const g = ad.list()[+b.dataset.ren], n = prompt('Nom du groupe', g.name); if (n && n.trim()) { ad.rename ? ad.rename(g, n.trim()) : g.name = n.trim(); done(); } });
+    o.querySelectorAll('[data-del]').forEach(b => b.onclick = e => { e.stopPropagation(); const L2 = ad.list(), g = L2[+b.dataset.del];
+      if (!confirm(`Supprimer ${g.name} ? Ses élèves passent dans « Non placés ».`)) return; ad.names(g).slice().forEach(n => { stash[n] = ad.take(g, n); }); L2.splice(+b.dataset.del, 1); done(); });
+    const nw = o.querySelector('#gnew'); if (nw) nw.onclick = () => { const L2 = ad.list(); L2.push(ad.make('Groupe ' + (L2.length + 1))); done(); };
+    o.querySelector('#gok').onclick = () => { o.remove(); ad.onClose && ad.onClose(); };
+  };
+  render(); document.body.appendChild(o);
+}

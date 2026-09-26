@@ -94,7 +94,7 @@ TOOL_IMPL.combine = function (el) {
     const draw = () => {
       box.innerHTML = `<div class="card"><b>${c.format === 'triathlon' ? 'Triathlon' : 'Duathlon'} athlétique</b><div class="muted">${esc(S.classe)} · course ${c.cMode === 'distance' ? c.cDist + ' m' : c.cDur + ' min'} · tour ${c.tour} m${c.plotOn ? ` · plots ${c.plot} m` : ''}${hasSaut(c) ? ` · saut ${c.sElan} élan (${c.sEssais} essais)` : ''} · lancer ${c.lElan} élan (${c.lEssais} essais, ${lUnit(c)})</div>
           <div class="big clock" id="gclk" style="font-size:clamp(2.2rem,11vw,3.6rem);padding:4px 0">${c.cMode === 'duree' ? cmss(c.cDur * 60) : '0:00'}</div>
-          <div class="row"><button class="btn btn-grad" id="all">🚩 Départ course</button>${S.start ? '<button class="btn btn-ghost" id="rz">↺ Chrono</button>' : ''}</div></div>
+          <div class="row"><button class="btn btn-grad" id="all">🚩 Départ course</button>${S.start ? '<button class="btn btn-ghost" id="rz">↺ Chrono</button>' : ''}</div><button class="btn btn-ghost btn-block" style="margin-top:8px" id="edg">✏️ Modifier les groupes / participants (absent, blessé…)</button></div>
         ${S.groups.map((g, gi) => { const R = g.eleves.map(e => resOf(c, e));
           const T = { d: R.reduce((a, r) => a + r.d, 0), t: R.reduce((a, r) => a + (r.t || 0), 0), l: R.reduce((a, r) => a + r.lBest, 0), s: R.reduce((a, r) => a + r.sBest, 0) };
           return `<div class="run">${grp ? `<div class="run-h"><b>${esc(g.name)}</b></div>` : ''}
@@ -112,6 +112,10 @@ TOOL_IMPL.combine = function (el) {
       const $ = s => box.querySelector(s), all = s => box.querySelectorAll(s), keep = () => save();
       const E = k => { const [gi, ei] = k.split('|').map(Number); return S.groups[gi].eleves[ei]; };
       $('#all').onclick = () => { const t = Date.now(); S.start = S.start || t; if (c.cMode === 'distance') S.groups.forEach(g => g.eleves.forEach(e => { if (!e.dep) e.dep = t; })); beep(1300, .45); keep(); draw(); };
+      $('#edg').onclick = () => { const indiv = c.orga !== 'grp', blank = n => ({ nom: n, dep: null, arr: null, tours: 0, plots: 0, sauts: Array(c.sEssais).fill(''), lancers: Array(c.lEssais).fill('') });
+        editGroupsPanel(indiv ? 'Participants' : 'Groupes', { cls: S.classe, indiv, list: () => S.groups, names: g => g.eleves.map(e => e.nom),
+          take: (g, n) => g.eleves.splice(g.eleves.findIndex(e => e.nom === n), 1)[0],
+          put: (g, n, d) => g.eleves.push(d || blank(n)), make: name => ({ name, eleves: [] }), onChange: keep, onClose: draw }); };
       if ($('#rz')) $('#rz').onclick = () => { if (confirm('Remettre le chrono de course à zéro ?')) { S.start = null; keep(); draw(); } };
       all('[data-go]').forEach(b => b.onclick = () => { E(b.dataset.go).dep = Date.now(); S.start = S.start || Date.now(); beep(1300, .3); keep(); draw(); });
       all('[data-fin]').forEach(b => b.onclick = () => { E(b.dataset.fin).arr = Date.now(); beep(1000, .3); keep(); draw(); });

@@ -157,15 +157,18 @@ TOOL_IMPL.match = function (el) {
 
   /* ----- Équipes constituées avec les élèves ----- */
   const T = () => DB.matchTeams && DB.matchTeams.teams && DB.matchTeams.teams.length ? DB.matchTeams : null;
+  const freeOf = t => { const placed = new Set(t.teams.flatMap(x => x.members)); return t.cls ? studentsOf(t.cls).filter(n => !placed.has(n)) : []; };
   const membersOf = i => (T() && T().teams[i] ? T().teams[i].members : []);
   function teamsBlock() {
     const t = T(); if (!t) return '';
     if (S.ia >= t.teams.length) S.ia = 0; if (S.ib >= t.teams.length || S.ib === S.ia) S.ib = S.ia === 0 ? Math.min(1, t.teams.length - 1) : 0;
     const opt = sel => t.teams.map((x, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${esc(x.name)}</option>`).join('');
-    return `<div style="margin-top:10px"><div class="muted" style="font-size:.8rem">${t.cls ? 'Classe ' + esc(t.cls) + ' · ' : ''}touchez un élève puis une autre équipe pour le déplacer.</div>
+    return `<div style="margin-top:10px"><div class="muted" style="font-size:.8rem">${t.cls ? 'Classe ' + esc(t.cls) + ' · ' : ''}touchez un élève puis une autre équipe pour le déplacer, ou « Non placés / absents » pour le retirer.</div>
       <div class="teams">${t.teams.map((x, i) => `<div class="card team mt-team" data-tm="${i}" style="border-top:5px solid ${i === S.ia ? '#B8912A' : i === S.ib ? '#1E5BD8' : 'var(--line)'}">
         <h3><span>${esc(x.name)}${i === S.ia ? ' · A' : i === S.ib ? ' · B' : ''}</span><span class="muted">${x.members.length}</span></h3>
-        <div class="pls">${x.members.map((n, j) => `<button class="pl-chip ${selPl === i + '|' + j ? 'sel' : ''}" data-pl="${i}|${j}">${esc(n)}</button>`).join('') || '<span class="muted">—</span>'}</div></div>`).join('')}</div>
+        <div class="pls">${x.members.map((n, j) => `<button class="pl-chip ${selPl === i + '|' + j ? 'sel' : ''}" data-pl="${i}|${j}">${esc(n)}</button>`).join('') || '<span class="muted">—</span>'}</div></div>`).join('')}
+        ${(() => { const fr = freeOf(t); return `<div class="card team mt-team" data-tm="-1" style="border-top:5px dashed var(--line);background:var(--grad-soft)"><h3><span>Non placés / absents</span><span class="muted">${fr.length}</span></h3>
+          <div class="pls">${fr.map((n, j) => `<button class="pl-chip ${selPl === '-1|' + j ? 'sel' : ''}" data-pl="-1|${j}">${esc(n)}</button>`).join('') || '<span class="muted">—</span>'}</div></div>`; })()}</div>
       ${t.teams.length > 1 ? `<div class="row"><div><label>Équipe A (sur le terrain)</label><select id="ia">${opt(S.ia)}</select></div><div><label>Équipe B</label><select id="ib">${opt(S.ib)}</select></div></div>` : ''}
       <button class="link" id="mt-clr" style="margin-top:8px">Effacer la composition</button></div>`;
   }
@@ -183,7 +186,7 @@ TOOL_IMPL.match = function (el) {
     if ($('#ib')) $('#ib').onchange = e => pick('ib', +e.target.value);
     el.querySelectorAll('[data-pl]').forEach(b => b.onclick = ev => { ev.stopPropagation(); selPl = selPl === b.dataset.pl ? null : b.dataset.pl; S.a = $('#na').value; S.b = $('#nb').value; setup(); });
     el.querySelectorAll('[data-tm]').forEach(c => c.onclick = () => { if (!selPl) return; const [i, j] = selPl.split('|').map(Number), k = +c.dataset.tm; selPl = null;
-      if (k !== i) { const [n] = t.teams[i].members.splice(j, 1); t.teams[k].members.push(n); save(); } S.a = $('#na').value; S.b = $('#nb').value; setup(); });
+      if (k !== i) { const n = i < 0 ? freeOf(t)[j] : t.teams[i].members.splice(j, 1)[0]; if (n && k >= 0) t.teams[k].members.push(n); save(); } S.a = $('#na').value; S.b = $('#nb').value; setup(); });
     $('#mt-clr').onclick = () => { if (!confirm('Effacer la composition des équipes ?')) return; DB.matchTeams = null; selPl = null; S.a = 'Équipe A'; S.b = 'Équipe B'; save(); setup(); };
   }
 
